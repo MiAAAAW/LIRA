@@ -1,6 +1,7 @@
 /**
  * @fileoverview Landing Page
- * @description Main landing page that assembles all sections
+ * @description Main landing page with 2-column layout
+ * All content comes from database via LandingController
  */
 
 import { Head } from '@inertiajs/react';
@@ -14,10 +15,7 @@ import { Footer } from '@/Components/layout/Footer';
 
 // Section Components
 import { Hero } from '@/Components/sections/Hero';
-import { FeaturedNews } from '@/Components/sections/FeaturedNews';
-import { Categories } from '@/Components/sections/Categories';
-import { Team } from '@/Components/sections/Team';
-import { Newsletter } from '@/Components/sections/Newsletter';
+import { ContentColumns } from '@/Components/sections/ContentColumns';
 
 /**
  * Canvas Orbs - Manchas de color flotantes para el lienzo continuo
@@ -91,15 +89,34 @@ function CanvasOrbs() {
 /**
  * Landing Page Component
  *
+ * Receives dynamic data from LandingController and merges with static config.
+ * Falls back to static config if database is empty.
+ *
  * @param {Object} props - Props passed from Laravel controller
  */
-export default function Landing(props) {
+export default function Landing({
+  // Marco Legal
+  ley24325 = [],
+  baseLegal = [],
+  indecopi = [],
+  // Historia
+  estandartes = [],
+  presidentes = [],
+  // Multimedia
+  videos = [],
+  audios = [],
+  // Comunicaciones
+  publicaciones = [],
+  comunicados = [],
+  distinciones = [],
+}) {
+  // Config para UI strings y secciones fijas
   const config = landingConfig;
 
   return (
     <>
       {/* SEO Head */}
-      <Head title={`${config.site.name} - Portal de Noticias`} />
+      <Head title={`${config.site.name} - Patrimonio Cultural`} />
 
       {/* Lienzo Continuo - Orbs flotantes */}
       <CanvasOrbs />
@@ -114,19 +131,23 @@ export default function Landing(props) {
           {/* Hero Section */}
           <Hero config={config.hero} />
 
-          {/* Featured News Section */}
-          {config.featuredNews && (
-            <FeaturedNews config={config.featuredNews} />
-          )}
-
-          {/* Categories Section */}
-          <Categories config={config.categories} />
-
-          {/* Team Section */}
-          <Team config={config.team} />
-
-          {/* Newsletter Section */}
-          <Newsletter config={config.newsletter} />
+          {/* 2-Column Layout: All 10 modules */}
+          <ContentColumns
+            // Institutional Column
+            ley24325={ley24325}
+            baseLegal={baseLegal}
+            indecopi={indecopi}
+            estandartes={estandartes}
+            presidentes={presidentes}
+            // Content Column
+            videos={videos}
+            audios={audios}
+            distinciones={distinciones}
+            publicaciones={publicaciones}
+            comunicados={comunicados}
+            // Config
+            config={config}
+          />
         </main>
 
         {/* Footer */}

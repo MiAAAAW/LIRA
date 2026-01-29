@@ -5,106 +5,134 @@
 @layer base {
   :root {
     /* ═══════════════════════════════════════════════════════════════════════
-       PALETA FESTIVA ANDINA - Pandilla Puneña
-       Inspirada en polleras, mantones, aguayos y Carnaval de Puno
-       Colores: Fucsia, Turquesa, Dorado, Naranja, Morado
+       LAGO TITICACA - Sistema de Diseño Profesional
+
+       Estética: Místico + Elegante + Andino
+       Inspirado en: Aguas del Titicaca, cielo altiplánico, tradición Puneña
+
+       Light Mode: Lago de día - aguas cristalinas, cielo despejado
+       Dark Mode: Lago de noche - aguas profundas, cielo estrellado
        ═══════════════════════════════════════════════════════════════════════ */
 
-    /* Background - Neutro (las secciones tienen sus propios colores) */
-    --background: 0 0% 100%;
-    --foreground: 0 0% 12%;
+    /* === LAGO TITICACA PALETTE === */
+    --lago-noche: 214 50% 10%;
+    --lago-profundo: 204 55% 15%;
+    --lago-medio: 203 50% 28%;
+    --lago-vibrante: 203 55% 44%;
+    --lago-claro: 201 60% 58%;
+    --lago-reflejo: 199 65% 68%;
+    --lago-cielo: 200 70% 85%;
 
-    /* Card - Blanco puro */
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 12%;
+    /* Acento dorado - bordados y detalles */
+    --dorado: 43 85% 45%;
+    --dorado-claro: 45 90% 55%;
+    --dorado-brillante: 48 95% 65%;
+
+    /* === LIGHT MODE - Lago de Día === */
+    --background: 200 40% 98%;
+    --foreground: 204 55% 12%;
+
+    /* Cards con efecto glass sutil */
+    --card: 200 30% 99%;
+    --card-foreground: 204 55% 12%;
 
     /* Popover */
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 12%;
+    --popover: 200 30% 99%;
+    --popover-foreground: 204 55% 12%;
 
-    /* Primary - Fucsia/Magenta (polleras puneñas) */
-    --primary: 340 82% 52%;
+    /* Primary - Azul Lago Vibrante */
+    --primary: 203 55% 44%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary - Turquesa (mantones, lago Titicaca) */
-    --secondary: 187 100% 42%;
+    /* Secondary - Azul Profundo */
+    --secondary: 204 50% 25%;
     --secondary-foreground: 0 0% 100%;
 
-    /* Muted - Neutro (las secciones tienen sus propios colores) */
-    --muted: 0 0% 98%;
-    --muted-foreground: 0 0% 40%;
+    /* Muted - Tonos suaves del lago */
+    --muted: 200 25% 94%;
+    --muted-foreground: 203 30% 40%;
 
-    /* Accent - Amarillo Dorado (bordados) */
-    --accent: 45 100% 51%;
-    --accent-foreground: 0 0% 12%;
+    /* Accent - Dorado Andino */
+    --accent: 43 85% 45%;
+    --accent-foreground: 0 0% 100%;
 
     /* Destructive */
-    --destructive: 0 84% 60%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Border & Input - Gris suave */
-    --border: 0 0% 88%;
-    --input: 0 0% 88%;
-    --ring: 340 82% 52%;
+    /* Borders - Inspirados en ondas del agua */
+    --border: 200 30% 88%;
+    --input: 200 30% 88%;
+    --ring: 203 55% 44%;
 
-    /* Radius */
+    /* Radius - Suave como ondas */
     --radius: 0.75rem;
 
-    /* Charts - Colores Andinos Festivos */
-    --chart-1: 340 82% 52%;
-    --chart-2: 14 100% 57%;
-    --chart-3: 45 100% 51%;
-    --chart-4: 187 100% 42%;
-    --chart-5: 291 64% 42%;
+    /* Charts */
+    --chart-1: 203 55% 44%;
+    --chart-2: 204 50% 25%;
+    --chart-3: 43 85% 45%;
+    --chart-4: 199 65% 68%;
+    --chart-5: 214 50% 10%;
 
-    /* Custom Pandilla Festiva Colors */
-    --pandilla-fucsia: 340 82% 52%;
-    --pandilla-naranja: 14 100% 57%;
-    --pandilla-dorado: 45 100% 51%;
-    --pandilla-turquesa: 187 100% 42%;
-    --pandilla-morado: 291 64% 42%;
-    --pandilla-rosa: 340 100% 63%;
-    --pandilla-verde: 122 39% 49%;
-    --pandilla-rojo: 0 65% 51%;
+    /* Sidebar */
+    --sidebar-background: 200 35% 97%;
+    --sidebar-foreground: 204 55% 15%;
+    --sidebar-primary: 203 55% 44%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 200 25% 92%;
+    --sidebar-accent-foreground: 204 55% 15%;
+    --sidebar-border: 200 30% 88%;
+    --sidebar-ring: 203 55% 44%;
   }
 
   .dark {
-    /* Background - Negro azulado (las secciones tienen sus propios colores) */
-    --background: 240 10% 4%;
-    --foreground: 0 0% 95%;
+    /* === DARK MODE - Lago de Noche === */
+    --background: 214 50% 6%;
+    --foreground: 200 20% 95%;
 
-    /* Card */
-    --card: 240 15% 12%;
-    --card-foreground: 0 0% 95%;
+    /* Cards - Profundidad del agua nocturna */
+    --card: 214 45% 10%;
+    --card-foreground: 200 20% 95%;
 
     /* Popover */
-    --popover: 240 15% 12%;
-    --popover-foreground: 0 0% 95%;
+    --popover: 214 45% 10%;
+    --popover-foreground: 200 20% 95%;
 
-    /* Primary - Fucsia más brillante */
-    --primary: 340 82% 60%;
-    --primary-foreground: 0 0% 100%;
+    /* Primary - Azul Lago Luminoso */
+    --primary: 201 60% 55%;
+    --primary-foreground: 214 50% 6%;
 
-    /* Secondary - Turquesa brillante */
-    --secondary: 187 100% 50%;
-    --secondary-foreground: 0 0% 100%;
+    /* Secondary - Reflejo en agua */
+    --secondary: 199 65% 65%;
+    --secondary-foreground: 214 50% 6%;
 
-    /* Muted - Oscuro neutro (las secciones tienen sus propios colores) */
-    --muted: 240 10% 8%;
-    --muted-foreground: 0 0% 60%;
+    /* Muted - Profundidades */
+    --muted: 214 40% 12%;
+    --muted-foreground: 200 20% 65%;
 
-    /* Accent - Dorado brillante */
-    --accent: 45 100% 60%;
-    --accent-foreground: 0 0% 12%;
+    /* Accent - Dorado Brillante (luna reflejada) */
+    --accent: 45 90% 55%;
+    --accent-foreground: 214 50% 6%;
 
     /* Destructive */
-    --destructive: 0 62% 40%;
+    --destructive: 0 62% 45%;
     --destructive-foreground: 0 0% 98%;
 
-    /* Border & Input */
-    --border: 240 15% 22%;
-    --input: 240 15% 22%;
-    --ring: 340 82% 60%;
+    /* Borders - Ondas nocturnas */
+    --border: 214 35% 18%;
+    --input: 214 35% 18%;
+    --ring: 201 60% 55%;
+
+    /* Sidebar */
+    --sidebar-background: 214 45% 8%;
+    --sidebar-foreground: 200 20% 92%;
+    --sidebar-primary: 201 60% 55%;
+    --sidebar-primary-foreground: 214 50% 6%;
+    --sidebar-accent: 214 40% 14%;
+    --sidebar-accent-foreground: 200 20% 92%;
+    --sidebar-border: 214 35% 18%;
+    --sidebar-ring: 201 60% 55%;
   }
 }
 
@@ -114,147 +142,148 @@
   }
   body {
     @apply text-foreground;
-    /* Lienzo Continuo - Azules, Celestes y Morados */
+    /* Lago de Día - Aguas cristalinas, cielo altiplánico */
     background:
       linear-gradient(
         180deg,
-        hsl(270 60% 94%) 0%,
-        hsl(260 55% 92%) 15%,
-        hsl(220 65% 90%) 30%,
-        hsl(200 70% 88%) 50%,
-        hsl(240 55% 91%) 70%,
-        hsl(270 50% 90%) 85%,
-        hsl(280 45% 88%) 100%
+        hsl(200 70% 95%) 0%,
+        hsl(200 60% 93%) 20%,
+        hsl(201 55% 90%) 40%,
+        hsl(203 50% 88%) 60%,
+        hsl(204 45% 92%) 80%,
+        hsl(200 40% 96%) 100%
       );
     background-attachment: fixed;
     min-height: 100vh;
   }
   .dark body {
-    /* Lienzo Noche Andina */
+    /* Lago de Noche - Aguas profundas, cielo estrellado */
     background:
       linear-gradient(
         180deg,
-        hsl(340 35% 8%) 0%,
-        hsl(340 30% 7%) 10%,
-        hsl(187 35% 6%) 25%,
-        hsl(45 25% 7%) 45%,
-        hsl(291 30% 7%) 65%,
-        hsl(340 25% 6%) 80%,
-        hsl(270 25% 5%) 100%
+        hsl(214 50% 6%) 0%,
+        hsl(214 48% 8%) 15%,
+        hsl(204 45% 10%) 35%,
+        hsl(203 40% 12%) 55%,
+        hsl(214 42% 9%) 75%,
+        hsl(214 50% 5%) 100%
       );
     background-attachment: fixed;
   }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   GRADIENTES FESTIVOS - Arcoíris Andino
+   LAGO TITICACA - Sistema de Gradientes Profesional
    ═══════════════════════════════════════════════════════════════════════════ */
 
 @layer utilities {
-  /* Gradiente Principal - Azul Celeste Morado */
+  /* Gradiente Principal - Aguas del Titicaca */
   .gradient-pandilla {
     background: linear-gradient(
       135deg,
-      hsl(280 70% 55%) 0%,
-      hsl(250 75% 60%) 25%,
-      hsl(220 80% 55%) 50%,
-      hsl(195 85% 50%) 75%,
-      hsl(180 80% 45%) 100%
+      hsl(214 50% 15%) 0%,
+      hsl(204 55% 20%) 25%,
+      hsl(203 55% 35%) 50%,
+      hsl(201 60% 50%) 75%,
+      hsl(199 65% 60%) 100%
     );
   }
 
-  /* Gradiente de texto - Azul Celeste Morado */
+  /* Gradiente de texto - Reflejo dorado en agua */
   .text-gradient-pandilla {
     background: linear-gradient(
       135deg,
-      hsl(280 70% 55%) 0%,
-      hsl(250 75% 60%) 25%,
-      hsl(220 80% 55%) 50%,
-      hsl(195 85% 50%) 75%,
-      hsl(180 80% 45%) 100%
+      hsl(43 85% 45%) 0%,
+      hsl(45 90% 55%) 50%,
+      hsl(48 95% 65%) 100%
     );
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
-  /* Gradiente cálido (Fucsia → Naranja → Dorado) */
+  /* Gradiente cálido - Dorado Andino */
   .gradient-warm {
-    background: linear-gradient(135deg, hsl(340 82% 52%) 0%, hsl(14 100% 57%) 50%, hsl(45 100% 51%) 100%);
+    background: linear-gradient(
+      135deg,
+      hsl(43 85% 40%) 0%,
+      hsl(45 90% 50%) 50%,
+      hsl(48 95% 60%) 100%
+    );
   }
 
-  /* Gradiente frío (Turquesa → Morado) */
+  /* Gradiente frío - Profundidades del lago */
   .gradient-cool {
-    background: linear-gradient(135deg, hsl(187 100% 42%) 0%, hsl(291 64% 42%) 100%);
+    background: linear-gradient(
+      135deg,
+      hsl(214 50% 10%) 0%,
+      hsl(203 55% 35%) 50%,
+      hsl(199 65% 55%) 100%
+    );
   }
 
-  /* Gradiente hero con transparencias - Festivo */
+  /* Gradiente hero con transparencias */
   .gradient-hero-festive {
     background:
-      linear-gradient(135deg, hsl(340 82% 52% / 0.12) 0%, transparent 40%),
-      linear-gradient(225deg, hsl(45 100% 51% / 0.1) 0%, transparent 40%),
-      linear-gradient(315deg, hsl(187 100% 42% / 0.1) 0%, transparent 40%);
+      linear-gradient(135deg, hsl(214 50% 15% / 0.3) 0%, transparent 50%),
+      linear-gradient(225deg, hsl(43 85% 45% / 0.1) 0%, transparent 40%),
+      linear-gradient(315deg, hsl(199 65% 60% / 0.15) 0%, transparent 50%);
   }
 
-  /* Gradientes para cards - Azules y Morados */
+  /* Gradientes para cards - Tonos del lago */
   .gradient-card-1 {
-    background: linear-gradient(135deg, hsl(280 65% 55%) 0%, hsl(250 70% 58%) 100%);
+    background: linear-gradient(135deg, hsl(214 50% 12%) 0%, hsl(204 55% 18%) 100%);
   }
   .gradient-card-2 {
-    background: linear-gradient(135deg, hsl(250 70% 58%) 0%, hsl(220 75% 55%) 100%);
+    background: linear-gradient(135deg, hsl(204 55% 18%) 0%, hsl(203 50% 28%) 100%);
   }
   .gradient-card-3 {
-    background: linear-gradient(135deg, hsl(220 75% 55%) 0%, hsl(195 80% 50%) 100%);
+    background: linear-gradient(135deg, hsl(203 50% 28%) 0%, hsl(203 55% 40%) 100%);
   }
   .gradient-card-4 {
-    background: linear-gradient(135deg, hsl(195 80% 50%) 0%, hsl(180 75% 45%) 100%);
+    background: linear-gradient(135deg, hsl(203 55% 40%) 0%, hsl(201 60% 52%) 100%);
   }
   .gradient-card-5 {
-    background: linear-gradient(135deg, hsl(180 75% 45%) 0%, hsl(280 65% 55%) 100%);
+    background: linear-gradient(135deg, hsl(201 60% 52%) 0%, hsl(199 65% 65%) 100%);
   }
 
-  /* Patrón Aguayo - Rayas horizontales multicolor */
-  .pattern-aguayo {
-    background: repeating-linear-gradient(
-      0deg,
-      hsl(340 82% 52%) 0px,
-      hsl(340 82% 52%) 3px,
-      hsl(14 100% 57%) 3px,
-      hsl(14 100% 57%) 6px,
-      hsl(45 100% 51%) 6px,
-      hsl(45 100% 51%) 9px,
-      hsl(187 100% 42%) 9px,
-      hsl(187 100% 42%) 12px,
-      hsl(291 64% 42%) 12px,
-      hsl(291 64% 42%) 15px
-    );
+  /* Patrón Ondas - Inspirado en el agua */
+  .pattern-waves {
+    background:
+      radial-gradient(ellipse at 50% 0%, hsl(199 65% 60% / 0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 50%, hsl(203 55% 44% / 0.1) 0%, transparent 40%),
+      radial-gradient(ellipse at 20% 80%, hsl(201 60% 55% / 0.12) 0%, transparent 45%);
   }
 
-  /* Patrón Aguayo sutil (para fondos) */
-  .pattern-aguayo-subtle {
-    background: repeating-linear-gradient(
-      0deg,
-      hsl(340 82% 52% / 0.1) 0px,
-      hsl(340 82% 52% / 0.1) 2px,
-      hsl(14 100% 57% / 0.1) 2px,
-      hsl(14 100% 57% / 0.1) 4px,
-      hsl(45 100% 51% / 0.1) 4px,
-      hsl(45 100% 51% / 0.1) 6px,
-      hsl(187 100% 42% / 0.1) 6px,
-      hsl(187 100% 42% / 0.1) 8px
-    );
+  /* Patrón Ondas sutil (para fondos) */
+  .pattern-waves-subtle {
+    background:
+      repeating-linear-gradient(
+        0deg,
+        hsl(203 55% 44% / 0.03) 0px,
+        hsl(203 55% 44% / 0.03) 1px,
+        transparent 1px,
+        transparent 8px
+      ),
+      repeating-linear-gradient(
+        90deg,
+        hsl(199 65% 60% / 0.02) 0px,
+        hsl(199 65% 60% / 0.02) 1px,
+        transparent 1px,
+        transparent 8px
+      );
   }
 
-  /* Barra de colores decorativa */
+  /* Barra decorativa - Tonos del lago con dorado */
   .stripe-top {
     border-top: 4px solid;
     border-image: linear-gradient(
       90deg,
-      hsl(340 82% 52%),
-      hsl(14 100% 57%),
-      hsl(45 100% 51%),
-      hsl(187 100% 42%),
-      hsl(291 64% 42%)
+      hsl(214 50% 15%),
+      hsl(203 55% 35%),
+      hsl(43 85% 45%),
+      hsl(201 60% 55%),
+      hsl(199 65% 65%)
     ) 1;
   }
 
@@ -343,10 +372,10 @@
 
 @keyframes pulse-glow {
   0%, 100% {
-    box-shadow: 0 0 20px hsl(340 82% 52% / 0.3);
+    box-shadow: 0 0 20px hsl(203 55% 44% / 0.4);
   }
   50% {
-    box-shadow: 0 0 40px hsl(45 100% 51% / 0.5);
+    box-shadow: 0 0 40px hsl(43 85% 45% / 0.5);
   }
 }
 
@@ -422,6 +451,72 @@
   }
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   ANIMACIONES LAGO TITICACA - Ondas de Agua
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@keyframes wave-horizontal-slow {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes wave-horizontal-medium {
+  0% {
+    transform: translateX(-25%);
+  }
+  100% {
+    transform: translateX(-75%);
+  }
+}
+
+@keyframes wave-horizontal-fast {
+  0% {
+    transform: translateX(-10%);
+  }
+  100% {
+    transform: translateX(-60%);
+  }
+}
+
+@keyframes ripple-expand {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.2;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+.animate-wave-slow {
+  animation: wave-horizontal-slow 25s linear infinite;
+}
+
+.animate-wave-medium {
+  animation: wave-horizontal-medium 18s linear infinite;
+}
+
+.animate-wave-fast {
+  animation: wave-horizontal-fast 12s linear infinite;
+}
+
+.animate-ripple {
+  animation: ripple-expand 4s ease-out infinite;
+}
+
+.animate-ripple-delayed {
+  animation: ripple-expand 5s ease-out infinite;
+  animation-delay: 2s;
+}
+
 /* Animation classes */
 .animate-fade-in-up {
   animation: fade-in-up 0.6s ease-out forwards;
@@ -455,22 +550,22 @@
   background: linear-gradient(
     90deg,
     transparent,
-    hsl(45 100% 51% / 0.3),
+    hsl(43 85% 45% / 0.3),
     transparent
   );
   background-size: 200% 100%;
   animation: shimmer 2s infinite;
 }
 
-.animate-shimmer-rainbow {
+.animate-shimmer-lago {
   background: linear-gradient(
     90deg,
-    hsl(340 82% 52%),
-    hsl(14 100% 57%),
-    hsl(45 100% 51%),
-    hsl(187 100% 42%),
-    hsl(291 64% 42%),
-    hsl(340 82% 52%)
+    hsl(214 50% 15%),
+    hsl(203 55% 35%),
+    hsl(43 85% 45%),
+    hsl(201 60% 55%),
+    hsl(199 65% 65%),
+    hsl(214 50% 15%)
   );
   background-size: 300% 100%;
   animation: shimmer-rainbow 4s ease infinite;
@@ -504,16 +599,16 @@
   animation: confetti-fall 4s linear infinite, confetti-shake 0.5s ease-in-out infinite;
 }
 
-.confetti:nth-child(1) { left: 10%; background: hsl(340 82% 52%); animation-delay: 0s; }
-.confetti:nth-child(2) { left: 20%; background: hsl(14 100% 57%); animation-delay: 0.5s; }
-.confetti:nth-child(3) { left: 30%; background: hsl(45 100% 51%); animation-delay: 1s; }
-.confetti:nth-child(4) { left: 40%; background: hsl(187 100% 42%); animation-delay: 1.5s; }
-.confetti:nth-child(5) { left: 50%; background: hsl(291 64% 42%); animation-delay: 2s; }
-.confetti:nth-child(6) { left: 60%; background: hsl(340 82% 52%); animation-delay: 2.5s; }
-.confetti:nth-child(7) { left: 70%; background: hsl(14 100% 57%); animation-delay: 3s; }
-.confetti:nth-child(8) { left: 80%; background: hsl(45 100% 51%); animation-delay: 3.5s; }
-.confetti:nth-child(9) { left: 90%; background: hsl(187 100% 42%); animation-delay: 0.2s; }
-.confetti:nth-child(10) { left: 5%; background: hsl(291 64% 42%); animation-delay: 0.7s; }
+.confetti:nth-child(1) { left: 10%; background: hsl(214 50% 15%); animation-delay: 0s; }
+.confetti:nth-child(2) { left: 20%; background: hsl(203 55% 35%); animation-delay: 0.5s; }
+.confetti:nth-child(3) { left: 30%; background: hsl(43 85% 45%); animation-delay: 1s; }
+.confetti:nth-child(4) { left: 40%; background: hsl(201 60% 55%); animation-delay: 1.5s; }
+.confetti:nth-child(5) { left: 50%; background: hsl(199 65% 65%); animation-delay: 2s; }
+.confetti:nth-child(6) { left: 60%; background: hsl(214 50% 15%); animation-delay: 2.5s; }
+.confetti:nth-child(7) { left: 70%; background: hsl(43 85% 45%); animation-delay: 3s; }
+.confetti:nth-child(8) { left: 80%; background: hsl(203 55% 35%); animation-delay: 3.5s; }
+.confetti:nth-child(9) { left: 90%; background: hsl(201 60% 55%); animation-delay: 0.2s; }
+.confetti:nth-child(10) { left: 5%; background: hsl(199 65% 65%); animation-delay: 0.7s; }
 
 /* Staggered animation delays */
 .delay-100 { animation-delay: 100ms; }
@@ -526,54 +621,91 @@
 .delay-800 { animation-delay: 800ms; }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   LIENZO CONTINUO - Orbs Flotantes y Glass Effect
+   LAGO TITICACA - Efectos de Agua y Glass
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* Contenedor de orbs flotantes */
+/* Contenedor de reflejos del lago - OPTIMIZADO */
 .canvas-orbs {
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 0;
   overflow: hidden;
+  contain: strict; /* Aislar repaints */
 }
 
-/* Orb individual - Más intensos */
+/* Desactivar en móviles para mejor performance */
+@media (max-width: 768px) {
+  .canvas-orbs {
+    display: none;
+  }
+}
+
+/* Pausar animaciones cuando no es visible (ahorro de GPU) */
+@media (prefers-reduced-motion: reduce) {
+  .canvas-orb {
+    animation: none !important;
+  }
+}
+
+/* Reflejo individual - OPTIMIZADO */
 .canvas-orb {
   position: absolute;
   border-radius: 50%;
-  filter: blur(90px);
-  opacity: 0.5;
-  animation: float-orb 20s ease-in-out infinite;
+  filter: blur(60px); /* Reducido de 100px para menos GPU */
+  opacity: 0.35;
+  animation: float-orb 30s ease-in-out infinite; /* Más lento = menos frames */
+  will-change: transform; /* Hint para GPU compositing */
+  contain: layout paint; /* Aislar layout/paint */
+  transform: translateZ(0); /* Force GPU layer */
 }
 
 .dark .canvas-orb {
-  opacity: 0.3;
+  opacity: 0.15;
 }
 
+/* Keyframes simplificados - menos puntos = menos cálculos */
 @keyframes float-orb {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  25% { transform: translate(20px, -30px) scale(1.05); }
-  50% { transform: translate(-10px, 20px) scale(0.95); }
-  75% { transform: translate(30px, 10px) scale(1.02); }
+  0%, 100% { transform: translate(0, 0) translateZ(0); }
+  50% { transform: translate(10px, -15px) translateZ(0); }
 }
 
-/* Glass effect para cards - permite ver el lienzo detrás */
+/* Glass effect - OPTIMIZADO sin backdrop-blur en móvil */
 .glass-card {
-  background: hsl(0 0% 100% / 0.85) !important;
-  backdrop-filter: blur(12px);
-  border: 1px solid hsl(0 0% 100% / 0.3) !important;
+  background: hsl(200 40% 99% / 0.95) !important;
+  border: 1px solid hsl(200 30% 90% / 0.5) !important;
+  box-shadow: 0 4px 24px hsl(203 55% 44% / 0.08);
+}
+
+/* Solo aplicar blur en desktop donde hay GPU potente */
+@media (min-width: 769px) {
+  .glass-card {
+    background: hsl(200 40% 99% / 0.9) !important;
+    backdrop-filter: blur(8px); /* Reducido de 16px */
+  }
 }
 
 .dark .glass-card {
-  background: hsl(240 15% 12% / 0.85) !important;
-  border: 1px solid hsl(0 0% 100% / 0.1) !important;
+  background: hsl(214 45% 10% / 0.85) !important;
+  border: 1px solid hsl(199 65% 60% / 0.15) !important;
+  box-shadow:
+    0 4px 24px hsl(214 50% 5% / 0.3),
+    inset 0 1px 0 hsl(199 65% 60% / 0.1);
 }
 
-/* Footer - Mantiene fondo sólido oscuro (final del lienzo) */
+/* Footer - Profundidades del lago */
 .bg-section-footer {
-  background: linear-gradient(180deg, hsl(270 30% 15%) 0%, hsl(270 25% 10%) 100%);
+  background: linear-gradient(180deg, hsl(214 45% 15%) 0%, hsl(214 50% 8%) 100%);
 }
 .dark .bg-section-footer {
-  background: linear-gradient(180deg, hsl(270 30% 8%) 0%, hsl(270 25% 4%) 100%);
+  background: linear-gradient(180deg, hsl(214 50% 6%) 0%, hsl(214 55% 3%) 100%);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
 }

@@ -6,11 +6,11 @@
 import { useState, useEffect } from 'react';
 import { Link } from '@inertiajs/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Sun, Moon } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/Components/ui/button';
 import { DynamicIcon } from '@/Components/icons/DynamicIcon';
-import { useTheme } from '@/hooks/useTheme';
+import { ModeToggle } from '@/Components/ui/mode-toggle';
 
 /**
  * Navbar Component
@@ -22,7 +22,6 @@ import { useTheme } from '@/hooks/useTheme';
 export function Navbar({ config, className }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { theme, toggleTheme, mounted } = useTheme();
 
   // Handle scroll effect
   useEffect(() => {
@@ -114,21 +113,7 @@ export function Navbar({ config, className }) {
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-3">
             {/* Theme Toggle */}
-            {mounted && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={toggleTheme}
-                className="h-9 w-9"
-              >
-                {theme === 'dark' ? (
-                  <Sun className="h-4 w-4" />
-                ) : (
-                  <Moon className="h-4 w-4" />
-                )}
-                <span className="sr-only">Toggle theme</span>
-              </Button>
-            )}
+            <ModeToggle />
 
             {/* CTA Button */}
             {config.cta && (
@@ -148,20 +133,7 @@ export function Navbar({ config, className }) {
 
           {/* Mobile Menu Button */}
           <div className="flex md:hidden items-center gap-2">
-            {mounted && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={toggleTheme}
-                className="h-9 w-9"
-              >
-                {theme === 'dark' ? (
-                  <Sun className="h-4 w-4" />
-                ) : (
-                  <Moon className="h-4 w-4" />
-                )}
-              </Button>
-            )}
+            <ModeToggle />
 
             <Button
               variant="ghost"

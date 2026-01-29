@@ -85,9 +85,16 @@ function TeamMemberCard({ member }) {
           </h3>
 
           {/* Role */}
-          <p className="text-sm text-primary font-medium mb-3">
+          <p className="text-sm text-primary font-medium mb-1">
             {member.role}
           </p>
+
+          {/* Period (for presidentes from database) */}
+          {member.period && (
+            <p className="text-xs text-muted-foreground mb-3">
+              {member.period}
+            </p>
+          )}
 
           {/* Bio */}
           {member.bio && (

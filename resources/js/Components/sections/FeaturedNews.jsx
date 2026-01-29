@@ -13,14 +13,19 @@ import { MotionWrapper, StaggerContainer, StaggerItem } from '@/Components/motio
 
 /**
  * Format date to locale string
- * @param {string} dateString
+ * @param {string|null} dateString
  */
 function formatDate(dateString) {
-  return new Date(dateString).toLocaleDateString('es-ES', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  });
+  if (!dateString) return 'Sin fecha';
+  try {
+    return new Date(dateString).toLocaleDateString('es-ES', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+  } catch {
+    return 'Sin fecha';
+  }
 }
 
 /**

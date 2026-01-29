@@ -1,75 +1,42 @@
 /**
- * @fileoverview Theme Hook for Dark/Light Mode
- * @description Manages theme state with localStorage persistence
+ * @fileoverview Theme Hook for Dark/Light/System Mode
+ * @description Manages theme state with localStorage persistence and system preference detection
  */
 
 import { useState, useEffect, useCallback } from 'react';
 
 /**
- * useTheme - Hook for managing dark/light mode
+ * Get the resolved theme based on system preference
+ * @returns {'light' | 'dark'}
+ */
+const getSystemTheme = () => {
+  if (typeof window === 'undefined') return 'light';
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+};
+
+/**
+ * useTheme - Hook for managing dark/light/system mode
  *
  * @returns {{
- *   theme: 'light' | 'dark',
- *   setTheme: (theme: 'light' | 'dark') => void,
+ *   theme: 'light' | 'dark' | 'system',
+ *   resolvedTheme: 'light' | 'dark',
+ *   setTheme: (theme: 'light' | 'dark' | 'system') => void,
  *   toggleTheme: () => void,
  *   isDark: boolean,
  *   isLight: boolean,
  *   mounted: boolean
  * }}
- *
- * @example
- * const { theme, toggleTheme, isDark } = useTheme();
- *
- * <button onClick={toggleTheme}>
- *   {isDark ? <Sun /> : <Moon />}
- * </button>
  */
 export function useTheme() {
-  const [theme, setThemeState] = useState('light');
+  const [theme, setThemeState] = useState('system');
+  const [resolvedTheme, setResolvedTheme] = useState('light');
   const [mounted, setMounted] = useState(false);
-
-  // Initialize theme from localStorage or system preference
-  useEffect(() => {
-    setMounted(true);
-
-    // Check localStorage first
-    const stored = localStorage.getItem('pandilla-theme');
-    if (stored === 'dark' || stored === 'light') {
-      setThemeState(stored);
-      applyTheme(stored);
-      return;
-    }
-
-    // Check system preference
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const systemTheme = prefersDark ? 'dark' : 'light';
-    setThemeState(systemTheme);
-    applyTheme(systemTheme);
-  }, []);
-
-  // Listen for system preference changes
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-
-    const handleChange = (e) => {
-      const stored = localStorage.getItem('pandilla-theme');
-      // Only auto-switch if user hasn't set a preference
-      if (!stored) {
-        const newTheme = e.matches ? 'dark' : 'light';
-        setThemeState(newTheme);
-        applyTheme(newTheme);
-      }
-    };
-
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
-  }, []);
 
   /**
    * Apply theme to document
    * @param {'light' | 'dark'} newTheme
    */
-  const applyTheme = (newTheme) => {
+  const applyTheme = useCallback((newTheme) => {
     const root = document.documentElement;
 
     if (newTheme === 'dark') {
@@ -77,32 +44,72 @@ export function useTheme() {
     } else {
       root.classList.remove('dark');
     }
-  };
+
+    setResolvedTheme(newTheme);
+  }, []);
+
+  /**
+   * Resolve and apply the effective theme
+   * @param {'light' | 'dark' | 'system'} themeValue
+   */
+  const resolveAndApply = useCallback((themeValue) => {
+    const effectiveTheme = themeValue === 'system' ? getSystemTheme() : themeValue;
+    applyTheme(effectiveTheme);
+  }, [applyTheme]);
+
+  // Initialize theme from localStorage or default to system
+  useEffect(() => {
+    setMounted(true);
+
+    const stored = localStorage.getItem('pandilla-theme');
+    const initialTheme = (stored === 'dark' || stored === 'light' || stored === 'system')
+      ? stored
+      : 'system';
+
+    setThemeState(initialTheme);
+    resolveAndApply(initialTheme);
+  }, [resolveAndApply]);
+
+  // Listen for system preference changes
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
+    const handleChange = () => {
+      // Only update if theme is set to 'system'
+      if (theme === 'system') {
+        applyTheme(getSystemTheme());
+      }
+    };
+
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, [theme, applyTheme]);
 
   /**
    * Set theme and persist to localStorage
-   * @param {'light' | 'dark'} newTheme
+   * @param {'light' | 'dark' | 'system'} newTheme
    */
   const setTheme = useCallback((newTheme) => {
     setThemeState(newTheme);
     localStorage.setItem('pandilla-theme', newTheme);
-    applyTheme(newTheme);
-  }, []);
+    resolveAndApply(newTheme);
+  }, [resolveAndApply]);
 
   /**
-   * Toggle between light and dark
+   * Toggle between light and dark (skips system)
    */
   const toggleTheme = useCallback(() => {
-    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    const newTheme = resolvedTheme === 'dark' ? 'light' : 'dark';
     setTheme(newTheme);
-  }, [theme, setTheme]);
+  }, [resolvedTheme, setTheme]);
 
   return {
     theme,
+    resolvedTheme,
     setTheme,
     toggleTheme,
-    isDark: theme === 'dark',
-    isLight: theme === 'light',
+    isDark: resolvedTheme === 'dark',
+    isLight: resolvedTheme === 'light',
     mounted,
   };
 }
