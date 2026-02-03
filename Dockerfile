@@ -4,7 +4,7 @@
 # ============================================
 # Stage 1: Build de assets (Node.js)
 # ============================================
-FROM node:20-alpine AS node-builder
+FROM node:22-alpine AS node-builder
 
 WORKDIR /app
 
