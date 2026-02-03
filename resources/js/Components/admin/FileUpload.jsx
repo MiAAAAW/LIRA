@@ -1,7 +1,15 @@
 import { useState, useRef } from 'react';
-import { cn } from '@/lib/utils';
+import { cn, storageUrl } from '@/lib/utils';
 import { Button } from '@/Components/ui/button';
 import DynamicIcon from '@/Components/DynamicIcon';
+
+// Format file size for display
+const formatFileSize = (bytes) => {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+};
 
 export default function FileUpload({
   label,
@@ -10,7 +18,7 @@ export default function FileUpload({
   onChange,
   error,
   accept = 'image/*',
-  maxSize = 5 * 1024 * 1024, // 5MB
+  maxSize = 5 * 1024 * 1024, // 5MB default, can be overridden
   preview = true,
   required = false,
   helpText,
@@ -19,6 +27,12 @@ export default function FileUpload({
   const [dragActive, setDragActive] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(null);
   const inputRef = useRef(null);
+
+  // Detect if this is a video upload based on accept attribute
+  const isVideoUpload = accept?.includes('video');
+
+  // For video uploads, allow much larger files (500MB default)
+  const effectiveMaxSize = isVideoUpload ? Math.max(maxSize, 500 * 1024 * 1024) : maxSize;
 
   const handleDrag = (e) => {
     e.preventDefault();
@@ -49,8 +63,8 @@ export default function FileUpload({
   };
 
   const handleFile = (file) => {
-    if (file.size > maxSize) {
-      alert(`El archivo es muy grande. Máximo ${maxSize / 1024 / 1024}MB`);
+    if (file.size > effectiveMaxSize) {
+      alert(`El archivo es muy grande. Máximo ${formatFileSize(effectiveMaxSize)}`);
       return;
     }
 
@@ -60,6 +74,9 @@ export default function FileUpload({
       const reader = new FileReader();
       reader.onload = () => setPreviewUrl(reader.result);
       reader.readAsDataURL(file);
+    } else {
+      // For non-image files (videos), clear any previous preview
+      setPreviewUrl(null);
     }
   };
 
@@ -71,8 +88,9 @@ export default function FileUpload({
     }
   };
 
-  const currentPreview = previewUrl || (typeof value === 'string' ? value : null);
+  const currentPreview = previewUrl || (typeof value === 'string' ? storageUrl(value) : null);
   const fileName = value instanceof File ? value.name : null;
+  const fileSize = value instanceof File ? value.size : null;
 
   return (
     <div className={cn("space-y-2", className)}>
@@ -131,24 +149,37 @@ export default function FileUpload({
             </p>
           </div>
           <p className="text-xs text-gray-400">
-            Máximo {maxSize / 1024 / 1024}MB
+            Máximo {formatFileSize(effectiveMaxSize)}
           </p>
         </div>
       )}
 
-      {/* File Name */}
+      {/* File Name - Enhanced for video files */}
       {fileName && (
-        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-          <DynamicIcon name="FileCheck" className="h-4 w-4 text-green-500" />
-          <span className="truncate">{fileName}</span>
+        <div className="flex items-center gap-2 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 border dark:border-gray-700">
+          <DynamicIcon
+            name={isVideoUpload ? "Film" : "FileCheck"}
+            className={cn("h-5 w-5", isVideoUpload ? "text-orange-500" : "text-green-500")}
+          />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
+              {fileName}
+            </p>
+            {fileSize && (
+              <p className="text-xs text-gray-500">
+                {formatFileSize(fileSize)}
+                {isVideoUpload && " - Listo para subir al CDN"}
+              </p>
+            )}
+          </div>
           <Button
             type="button"
             variant="ghost"
             size="sm"
             onClick={handleRemove}
-            className="h-6 px-2"
+            className="h-8 px-2 text-gray-400 hover:text-red-500"
           >
-            <DynamicIcon name="X" className="h-3 w-3" />
+            <DynamicIcon name="X" className="h-4 w-4" />
           </Button>
         </div>
       )}
@@ -221,7 +252,7 @@ export function ImageGalleryUpload({
         {value?.map((item, index) => (
           <div key={index} className="relative aspect-square">
             <img
-              src={item instanceof File ? URL.createObjectURL(item) : item}
+              src={item instanceof File ? URL.createObjectURL(item) : storageUrl(item)}
               alt=""
               className="h-full w-full rounded-lg object-cover border dark:border-gray-700"
             />

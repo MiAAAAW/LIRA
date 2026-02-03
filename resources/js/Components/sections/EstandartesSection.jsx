@@ -4,18 +4,19 @@
  */
 
 import { Flag, Calendar } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, storageUrl } from '@/lib/utils';
 import { Badge } from '@/Components/ui/badge';
 import { Card, CardContent } from '@/Components/ui/card';
 import { MotionWrapper, StaggerContainer, StaggerItem } from '@/Components/motion/MotionWrapper';
 
 function EstandarteCard({ item }) {
+  const imageUrl = storageUrl(item.imagen_principal);
   return (
     <Card className="overflow-hidden border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-lg group">
       <div className="relative h-64 bg-muted">
-        {item.imagen_principal ? (
+        {imageUrl ? (
           <img
-            src={item.imagen_principal}
+            src={imageUrl}
             alt={item.titulo}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />

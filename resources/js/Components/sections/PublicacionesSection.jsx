@@ -4,7 +4,7 @@
  */
 
 import { Newspaper, Megaphone, Award, Calendar, User, ExternalLink, Download } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, storageUrl } from '@/lib/utils';
 import { Badge } from '@/Components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
 import { Button } from '@/Components/ui/button';
@@ -24,12 +24,13 @@ function formatDate(dateString) {
 }
 
 function PublicacionCard({ item }) {
+  const imageUrl = storageUrl(item.imagen_portada);
   return (
     <Card className="h-full border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-lg group">
       <div className="relative h-48 bg-muted overflow-hidden">
-        {item.imagen_portada ? (
+        {imageUrl ? (
           <img
-            src={item.imagen_portada}
+            src={imageUrl}
             alt={item.titulo}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />

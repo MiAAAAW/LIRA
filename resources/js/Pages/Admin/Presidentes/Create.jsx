@@ -4,6 +4,7 @@ import CrudForm from '@/Components/admin/CrudForm';
 
 export default function Create() {
   const fields = [
+    // Datos principales
     { name: 'nombres', label: 'Nombres', required: true },
     { name: 'apellidos', label: 'Apellidos', required: true },
     { name: 'periodo_inicio', label: 'Año Inicio', type: 'number', required: true, placeholder: '2020' },
@@ -11,7 +12,7 @@ export default function Create() {
     { name: 'profesion', label: 'Profesión', fullWidth: true },
     { name: 'email', label: 'Email', type: 'email' },
     { name: 'telefono', label: 'Teléfono' },
-    { name: 'es_actual', label: 'Es Presidente Actual', type: 'checkbox', fullWidth: true },
+    { name: 'es_actual', label: 'Es Presidente Actual', type: 'checkbox', fullWidth: true, helpText: 'Solo uno puede ser actual' },
     { name: 'biografia', label: 'Biografía', type: 'textarea', fullWidth: true, rows: 4, group: 'Información' },
     { name: 'logros', label: 'Logros', type: 'textarea', fullWidth: true, rows: 4, group: 'Información' },
     { name: 'foto', label: 'Foto', type: 'image', group: 'Imagen' },

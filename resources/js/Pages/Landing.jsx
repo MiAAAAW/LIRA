@@ -17,74 +17,7 @@ import { Footer } from '@/Components/layout/Footer';
 import { Hero } from '@/Components/sections/Hero';
 import { ContentColumns } from '@/Components/sections/ContentColumns';
 
-/**
- * Canvas Orbs - Manchas de color flotantes para el lienzo continuo
- */
-function CanvasOrbs() {
-  return (
-    <div className="canvas-orbs" aria-hidden="true">
-      {/* Violeta - Top izquierda */}
-      <div
-        className="canvas-orb"
-        style={{
-          background: 'hsl(280 70% 60%)',
-          width: '500px',
-          height: '500px',
-          top: '5%',
-          left: '-10%',
-        }}
-      />
-      {/* Celeste - Derecha */}
-      <div
-        className="canvas-orb"
-        style={{
-          background: 'hsl(195 85% 55%)',
-          width: '400px',
-          height: '400px',
-          top: '25%',
-          right: '-5%',
-          animationDelay: '-5s',
-        }}
-      />
-      {/* Azul - Centro izquierda */}
-      <div
-        className="canvas-orb"
-        style={{
-          background: 'hsl(220 80% 58%)',
-          width: '350px',
-          height: '350px',
-          top: '45%',
-          left: '5%',
-          animationDelay: '-10s',
-        }}
-      />
-      {/* Morado - Derecha abajo */}
-      <div
-        className="canvas-orb"
-        style={{
-          background: 'hsl(260 65% 55%)',
-          width: '450px',
-          height: '450px',
-          top: '65%',
-          right: '-8%',
-          animationDelay: '-15s',
-        }}
-      />
-      {/* Índigo - Abajo izquierda */}
-      <div
-        className="canvas-orb"
-        style={{
-          background: 'hsl(240 60% 55%)',
-          width: '300px',
-          height: '300px',
-          bottom: '5%',
-          left: '15%',
-          animationDelay: '-7s',
-        }}
-      />
-    </div>
-  );
-}
+// CanvasOrbs removido - ahora el Hero usa video de fondo desde CDN
 
 /**
  * Landing Page Component
@@ -95,6 +28,8 @@ function CanvasOrbs() {
  * @param {Object} props - Props passed from Laravel controller
  */
 export default function Landing({
+  // CDN URL para assets
+  cdnUrl = '',
   // Marco Legal
   ley24325 = [],
   baseLegal = [],
@@ -113,13 +48,18 @@ export default function Landing({
   // Config para UI strings y secciones fijas
   const config = landingConfig;
 
+  // Merge hero config con video URL dinámica del CDN
+  const heroConfig = {
+    ...config.hero,
+    video: cdnUrl ? {
+      src: `${cdnUrl}/landing/landing.mp4`,
+    } : null,
+  };
+
   return (
     <>
       {/* SEO Head */}
       <Head title={`${config.site.name} - Patrimonio Cultural`} />
-
-      {/* Lienzo Continuo - Orbs flotantes */}
-      <CanvasOrbs />
 
       {/* Main Layout */}
       <div className="min-h-screen text-foreground scroll-smooth relative z-10">
@@ -128,8 +68,8 @@ export default function Landing({
 
         {/* Main Content */}
         <main>
-          {/* Hero Section */}
-          <Hero config={config.hero} />
+          {/* Hero Section - con video de fondo desde CDN */}
+          <Hero config={heroConfig} />
 
           {/* 2-Column Layout: All 10 modules */}
           <ContentColumns

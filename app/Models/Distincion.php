@@ -18,13 +18,9 @@ class Distincion extends Model
         'tipo',
         'otorgante',
         'fecha_otorgamiento',
-        'lugar',
-        'descripcion',
-        'contenido',
-        'imagen',
-        'galeria',
-        'documento_pdf',
-        'resolucion',
+        'r2_pdf_key',
+        'r2_pdf_url',
+        'documento_pdf', // legacy, mantener para compatibilidad
         'orden',
         'is_published',
         'is_featured',
@@ -32,9 +28,12 @@ class Distincion extends Model
 
     protected $casts = [
         'fecha_otorgamiento' => 'date',
-        'galeria' => 'array',
         'is_published' => 'boolean',
         'is_featured' => 'boolean',
+    ];
+
+    protected $appends = [
+        'pdf_url',
     ];
 
     public const TIPOS = [
@@ -44,4 +43,21 @@ class Distincion extends Model
         'diploma' => 'Diploma',
         'condecoracion' => 'Condecoración',
     ];
+
+    /**
+     * Accessor para obtener la URL del PDF
+     * Prioriza R2, fallback a documento_pdf local
+     */
+    public function getPdfUrlAttribute(): ?string
+    {
+        if ($this->r2_pdf_url) {
+            return $this->r2_pdf_url;
+        }
+
+        if ($this->documento_pdf) {
+            return asset('storage/' . $this->documento_pdf);
+        }
+
+        return null;
+    }
 }

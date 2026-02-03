@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\DistincionController;
 use App\Http\Controllers\Admin\PublicacionController;
 use App\Http\Controllers\Admin\ComunicadoController;
 use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\Api\DirectUploadController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -63,17 +64,21 @@ Route::prefix('admin')
         // Settings
         Route::get('/settings', [SettingsController::class, 'index'])->name('settings');
 
+        // Direct Upload API (para subir archivos grandes a R2)
+        Route::post('/upload/presigned', [DirectUploadController::class, 'getPresignedUrl'])->name('upload.presigned');
+        Route::post('/upload/confirm', [DirectUploadController::class, 'confirmUpload'])->name('upload.confirm');
+
         // Grupo 1: Marco Legal e Historia (modal-based: sin create/edit pages)
         Route::resource('ley24325', Ley24325Controller::class)->only(['index', 'store', 'update', 'destroy']);
         Route::resource('base-legal', BaseLegalController::class)->only(['index', 'store', 'update', 'destroy'])->parameters(['base-legal' => 'baseLegal']);
         Route::resource('indecopi', RegistroIndecopiController::class)->only(['index', 'store', 'update', 'destroy']);
-        Route::resource('estandartes', EstandarteController::class);
+        Route::resource('estandartes', EstandarteController::class)->only(['index', 'store', 'update', 'destroy']);
         Route::resource('presidentes', PresidenteController::class);
 
         // Grupo 2: Multimedia y Comunicación
         Route::resource('videos', VideoController::class);
         Route::resource('audios', AudioController::class);
-        Route::resource('distinciones', DistincionController::class);
+        Route::resource('distinciones', DistincionController::class)->only(['index', 'store', 'update', 'destroy']);
         Route::resource('publicaciones', PublicacionController::class);
         Route::resource('comunicados', ComunicadoController::class);
 

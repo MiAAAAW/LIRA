@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\HasProcessedImages;
 use App\Traits\HasPublishedScope;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Presidente extends Model
 {
-    use HasFactory, SoftDeletes, HasPublishedScope;
+    use HasFactory, SoftDeletes, HasPublishedScope, HasProcessedImages;
 
     protected $table = 'presidentes';
 
@@ -38,6 +39,14 @@ class Presidente extends Model
         'is_featured' => 'boolean',
     ];
 
+    protected $appends = [
+        'image_url',
+        'thumbnail_url',
+        'webp_url',
+        'nombre_completo',
+        'periodo',
+    ];
+
     /**
      * Obtener nombre completo
      */
@@ -61,5 +70,21 @@ class Presidente extends Model
     public function scopeActual($query)
     {
         return $query->where('es_actual', true);
+    }
+
+    /**
+     * Tipo de imagen para procesamiento
+     */
+    public function getImageType(): string
+    {
+        return 'presidentes';
+    }
+
+    /**
+     * Campo de imagen principal
+     */
+    public function getImageField(): string
+    {
+        return 'foto';
     }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Publicacion;
+use App\Services\ImageProcessingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -11,6 +12,10 @@ use Inertia\Response;
 
 class PublicacionController extends Controller
 {
+    public function __construct(
+        protected ImageProcessingService $imageService
+    ) {}
+
     public function index(): Response
     {
         $items = Publicacion::orderByDesc('anio_publicacion')
@@ -53,8 +58,11 @@ class PublicacionController extends Controller
             'is_featured' => 'boolean',
         ]);
 
-        $validated['imagen_portada'] = $request->file('imagen_portada')
-            ->store(config('pandilla.uploads.paths.images'), 'public');
+        $paths = $this->imageService->process(
+            $request->file('imagen_portada'),
+            'publicaciones'
+        );
+        $validated['imagen_portada'] = $paths['original'];
 
         if ($request->hasFile('documento_pdf')) {
             $validated['documento_pdf'] = $request->file('documento_pdf')
@@ -106,11 +114,12 @@ class PublicacionController extends Controller
         ]);
 
         if ($request->hasFile('imagen_portada')) {
-            if ($publicacion->imagen_portada) {
-                Storage::disk('public')->delete($publicacion->imagen_portada);
-            }
-            $validated['imagen_portada'] = $request->file('imagen_portada')
-                ->store(config('pandilla.uploads.paths.images'), 'public');
+            $paths = $this->imageService->process(
+                $request->file('imagen_portada'),
+                'publicaciones',
+                $publicacion->imagen_portada
+            );
+            $validated['imagen_portada'] = $paths['original'];
         }
 
         if ($request->hasFile('documento_pdf')) {
@@ -129,6 +138,14 @@ class PublicacionController extends Controller
 
     public function destroy(Publicacion $publicacion)
     {
+        if ($publicacion->imagen_portada) {
+            $this->imageService->delete($publicacion->imagen_portada, 'publicaciones');
+        }
+
+        if ($publicacion->documento_pdf) {
+            Storage::disk('public')->delete($publicacion->documento_pdf);
+        }
+
         $publicacion->delete();
 
         return redirect()->route('admin.publicaciones.index')

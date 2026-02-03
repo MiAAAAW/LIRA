@@ -17,6 +17,7 @@ export default function CrudForm({
 }) {
   const isEdit = !!item;
 
+  // Build initial data from fields, plus standard publish options
   const initialData = fields.reduce((acc, field) => {
     if (field.type === 'checkbox') {
       acc[field.name] = item?.[field.name] ?? false;
@@ -24,36 +25,26 @@ export default function CrudForm({
       acc[field.name] = item?.[field.name] ?? '';
     }
     return acc;
-  }, {});
+  }, {
+    // Always include publish options with proper defaults
+    is_published: item?.is_published ?? false,
+    is_featured: item?.is_featured ?? false,
+    orden: item?.orden ?? 0,
+  });
 
   const { data, setData, post, put, processing, errors } = useForm(initialData);
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    const formData = new FormData();
-
-    Object.entries(data).forEach(([key, value]) => {
-      if (value instanceof File) {
-        formData.append(key, value);
-      } else if (Array.isArray(value)) {
-        value.forEach((v, i) => {
-          if (v instanceof File) {
-            formData.append(`${key}[${i}]`, v);
-          } else {
-            formData.append(`${key}[${i}]`, v);
-          }
-        });
-      } else if (value !== null && value !== undefined) {
-        formData.append(key, value);
-      }
-    });
+    const options = {
+      forceFormData: true,
+    };
 
     if (isEdit) {
-      formData.append('_method', 'PUT');
-      router.post(updateRoute, formData);
+      put(updateRoute, options);
     } else {
-      router.post(storeRoute, formData);
+      post(storeRoute, options);
     }
   };
 

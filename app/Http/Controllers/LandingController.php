@@ -22,7 +22,12 @@ class LandingController extends Controller
      */
     public function index(): Response
     {
+        // URL base del CDN (Cloudflare R2)
+        $cdnUrl = rtrim(config('filesystems.disks.r2.url', ''), '/');
+
         return Inertia::render('Landing', [
+            // CDN URL para assets estáticos del landing
+            'cdnUrl' => $cdnUrl,
             // ==========================================
             // MARCO LEGAL
             // ==========================================
@@ -115,22 +120,26 @@ class LandingController extends Controller
     }
 
     /**
-     * Get team members (Presidentes).
+     * Get team members (Presidentes) - Timeline histórico completo.
+     * Sin límite - muestra todos los publicados para el timeline.
      */
     private function getTeam(): array
     {
         return Presidente::published()
             ->orderByDesc('es_actual')
+            ->orderBy('orden')
             ->orderByDesc('periodo_inicio')
-            ->limit(4)
             ->get()
             ->map(fn($p) => [
                 'id' => (string) $p->id,
                 'name' => $p->nombre_completo,
                 'role' => $p->es_actual ? 'Presidente Actual' : 'Ex Presidente',
-                'avatar' => $p->foto,
+                'avatar' => $p->foto ? asset('storage/' . $p->foto) : null,
                 'bio' => $p->biografia,
                 'period' => $p->periodo,
+                'yearStart' => (int) $p->periodo_inicio,
+                'yearEnd' => $p->periodo_fin ? (int) $p->periodo_fin : null,
+                'isCurrent' => (bool) $p->es_actual,
                 'social' => [
                     'email' => $p->email,
                 ],

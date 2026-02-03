@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, router, useForm } from '@inertiajs/react';
-import { cn } from '@/lib/utils';
+import { cn, storageUrl } from '@/lib/utils';
 import { Button } from '@/Components/ui/button';
 import { Input } from '@/Components/ui/input';
 import { Badge } from '@/Components/ui/badge';
@@ -23,6 +23,7 @@ import DynamicIcon from '@/Components/DynamicIcon';
 import DeleteDialog from './DeleteDialog';
 import FormField from './FormField';
 import FileUpload from './FileUpload';
+import DirectUpload from './DirectUpload';
 
 export default function DataTable({
   title,
@@ -146,13 +147,46 @@ export default function DataTable({
 
     const submitData = new FormData();
 
+    // Get field types by name for special handling
+    const fieldTypes = {};
+    formFields?.forEach(f => { fieldTypes[f.name] = f.type; });
+
     // Get file field names to skip string values (existing URLs)
     const fileFieldNames = formFields
       ?.filter(f => f.type === 'file' || f.type === 'image')
       .map(f => f.name) || [];
 
+    // Get direct-upload field names
+    const directUploadFieldNames = formFields
+      ?.filter(f => f.type === 'direct-upload')
+      .map(f => f.name) || [];
+
+    // Build a map of direct-upload field configs for custom key/url field names
+    const directUploadFieldConfigs = {};
+    formFields?.filter(f => f.type === 'direct-upload').forEach(f => {
+      directUploadFieldConfigs[f.name] = {
+        keyField: f.keyField || 'r2_key',
+        urlField: f.urlField || 'r2_url',
+      };
+    });
+
     // Add all form fields
     Object.entries(formData).forEach(([key, value]) => {
+      // Handle direct-upload fields (already uploaded to R2)
+      if (directUploadFieldNames.includes(key)) {
+        if (value && typeof value === 'object' && value.key) {
+          // Usar los nombres de campo personalizados si están definidos
+          const config = directUploadFieldConfigs[key];
+          submitData.append(config.keyField, value.key);
+          submitData.append(config.urlField, value.url);
+          // Solo agregar tipo_fuente si no es documents (es video/audio)
+          if (!config.keyField.includes('pdf')) {
+            submitData.append('tipo_fuente', 'cloudflare');
+          }
+        }
+        return;
+      }
+
       if (value instanceof File) {
         // Always append actual files
         submitData.append(key, value);
@@ -420,7 +454,38 @@ export default function DataTable({
                 {/* Dynamic Fields */}
                 <div className="grid gap-4 sm:grid-cols-2">
                   {formFields?.map((field) => {
-                    const isFullWidth = field.fullWidth || field.type === 'textarea' || field.type === 'file' || field.type === 'image';
+                    const isFullWidth = field.fullWidth || field.type === 'textarea' || field.type === 'file' || field.type === 'image' || field.type === 'direct-upload';
+
+                    // Direct Upload para videos/audios/documentos grandes (va directo a CDN)
+                    if (field.type === 'direct-upload') {
+                      // Obtener info del archivo existente si estamos editando
+                      // Usar urlField/keyField si están definidos, sino usar fallbacks
+                      const urlFieldName = field.urlField || field.existingUrlField || 'r2_video_url';
+                      const keyFieldName = field.keyField || field.existingKeyField || 'r2_key';
+                      const existingFile = editingItem ? {
+                        url: editingItem[urlFieldName] || editingItem.playable_url || editingItem.pdf_url,
+                        key: editingItem[keyFieldName],
+                        name: editingItem.titulo || 'Archivo existente',
+                      } : null;
+
+                      return (
+                        <div key={field.name} className="sm:col-span-2">
+                          <DirectUpload
+                            label={field.label}
+                            name={field.name}
+                            type={field.uploadType || 'videos'}
+                            accept={field.accept}
+                            maxSize={field.maxSize}
+                            required={field.required && !editingItem}
+                            helpText={field.helpText}
+                            error={errors[field.name]}
+                            onChange={handleFormChange}
+                            value={formData[field.name]}
+                            existingFile={existingFile}
+                          />
+                        </div>
+                      );
+                    }
 
                     if (field.type === 'file' || field.type === 'image') {
                       return (
@@ -517,15 +582,18 @@ function renderCell(item, col) {
   }
 
   if (col.type === 'image') {
-    return value ? (
+    const imgUrl = storageUrl(value);
+    return imgUrl ? (
       <img
-        src={value}
+        src={imgUrl}
         alt=""
         className="h-10 w-10 rounded object-cover"
+        onError={(e) => {
+          e.target.style.display = 'none';
+          e.target.nextSibling?.classList?.remove('hidden');
+        }}
       />
-    ) : (
-      <div className="h-10 w-10 rounded bg-gray-100 dark:bg-gray-800" />
-    );
+    ) : null;
   }
 
   return value ?? '-';

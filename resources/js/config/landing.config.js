@@ -57,35 +57,22 @@ export const landingConfig = {
   // HERO SECTION
   // ═══════════════════════════════════════════════════════════════════════════════
   hero: {
-    badge: {
-      text: "Patrimonio Cultural de la Nación",
-      variant: "outline",
-    },
+    badge: null,
     title: {
       main: "Conjunto Pandillero",
       highlight: "Lira Puno",
       suffix: "",
+      break: true,
     },
-    description: "Desde 1926 preservamos la tradición de la Pandilla Puneña, la reina de las danzas del altiplano. Elegancia, pasión y el espíritu del carnaval puneño viven en cada paso.",
-    cta: {
-      primary: {
-        text: "Ver Marco Legal",
-        href: "#marco-legal",
-      },
-      secondary: {
-        text: "Ver Multimedia",
-        href: "#galeria",
-      },
-    },
+    subtitle: "ALMA MATER DE LA PANDILLA PUNEÑA",
+    years: "1926 - 2026",
+    description: null,
+    cta: null,
     image: {
       src: "/images/hero-pandilla.jpg",
-      alt: "Pandilla Lira Puno - Danza tradicional",
+      alt: "Conjunto Pandillero Lira Puno",
     },
-    stats: [
-      { value: "1926", label: "Año Fundación" },
-      { value: "98+", label: "Años de Tradición" },
-      { value: "2012", label: "Patrimonio Nacional" },
-    ],
+    stats: null,
   },
 
   // ═══════════════════════════════════════════════════════════════════════════════

@@ -4,13 +4,17 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Presidente;
+use App\Services\ImageProcessingService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class PresidenteController extends Controller
 {
+    public function __construct(
+        protected ImageProcessingService $imageService
+    ) {}
+
     public function index(): Response
     {
         $items = Presidente::orderByDesc('es_actual')
@@ -48,8 +52,11 @@ class PresidenteController extends Controller
         ]);
 
         if ($request->hasFile('foto')) {
-            $validated['foto'] = $request->file('foto')
-                ->store(config('pandilla.uploads.paths.images'), 'public');
+            $paths = $this->imageService->process(
+                $request->file('foto'),
+                'presidentes'
+            );
+            $validated['foto'] = $paths['original'];
         }
 
         // Si es actual, desmarcar otros
@@ -98,11 +105,12 @@ class PresidenteController extends Controller
         ]);
 
         if ($request->hasFile('foto')) {
-            if ($presidente->foto) {
-                Storage::disk('public')->delete($presidente->foto);
-            }
-            $validated['foto'] = $request->file('foto')
-                ->store(config('pandilla.uploads.paths.images'), 'public');
+            $paths = $this->imageService->process(
+                $request->file('foto'),
+                'presidentes',
+                $presidente->foto
+            );
+            $validated['foto'] = $paths['original'];
         }
 
         // Si es actual, desmarcar otros
@@ -118,6 +126,10 @@ class PresidenteController extends Controller
 
     public function destroy(Presidente $presidente)
     {
+        if ($presidente->foto) {
+            $this->imageService->delete($presidente->foto, 'presidentes');
+        }
+
         $presidente->delete();
 
         return redirect()->route('admin.presidentes.index')

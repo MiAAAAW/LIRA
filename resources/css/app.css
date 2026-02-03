@@ -189,17 +189,33 @@
     );
   }
 
-  /* Gradiente de texto - Reflejo dorado en agua */
+  /* Gradiente de texto - Dorado metálico realista */
   .text-gradient-pandilla {
     background: linear-gradient(
-      135deg,
-      hsl(43 85% 45%) 0%,
-      hsl(45 90% 55%) 50%,
-      hsl(48 95% 65%) 100%
+      180deg,
+      #8B6914 0%,
+      #B8860B 15%,
+      #DAA520 30%,
+      #FFD700 45%,
+      #FFFACD 50%,
+      #FFD700 55%,
+      #DAA520 70%,
+      #B8860B 85%,
+      #8B6914 100%
     );
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    filter: drop-shadow(1px 1px 1px rgba(0, 0, 0, 0.5))
+            drop-shadow(0 0 3px rgba(218, 165, 32, 0.3));
+  }
+
+  /* Texto con borde azul */
+  .text-stroke-blue {
+    -webkit-text-stroke: 2px hsl(210 80% 40%);
+    text-shadow:
+      0 0 10px rgba(30, 90, 180, 0.5),
+      0 0 20px rgba(30, 90, 180, 0.3);
   }
 
   /* Gradiente cálido - Dorado Andino */

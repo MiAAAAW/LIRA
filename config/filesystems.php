@@ -60,6 +60,30 @@ return [
             'report' => false,
         ],
 
+        /*
+        |--------------------------------------------------------------------------
+        | Cloudflare R2 (CDN para Videos)
+        |--------------------------------------------------------------------------
+        |
+        | Almacenamiento de videos con entrega global via Cloudflare CDN.
+        | Datacenter en Lima, Perú = latencia <20ms
+        | Costo: $0.015/GB storage, $0 transferencia
+        |
+        */
+        'r2' => [
+            'driver' => 's3',
+            'key' => env('CLOUDFLARE_R2_ACCESS_KEY'),
+            'secret' => env('CLOUDFLARE_R2_SECRET_KEY'),
+            'region' => 'auto',
+            'bucket' => env('CLOUDFLARE_R2_BUCKET', 'pandilla-videos'),
+            'url' => env('CLOUDFLARE_R2_PUBLIC_URL'),
+            'endpoint' => env('CLOUDFLARE_ACCOUNT_ID')
+                ? 'https://' . env('CLOUDFLARE_ACCOUNT_ID') . '.r2.cloudflarestorage.com'
+                : null,
+            'use_path_style_endpoint' => false,
+            'throw' => true,
+        ],
+
     ],
 
     /*

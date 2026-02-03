@@ -253,13 +253,14 @@ return [
         'vimeo' => 'Vimeo',
         'soundcloud' => 'SoundCloud',
         'spotify' => 'Spotify',
+        'cloudflare' => 'Cloudflare R2 (CDN)',
         'cloudinary' => 'Cloudinary',
         'local' => 'Archivo Local',
     ],
 
     /*
     |--------------------------------------------------------------------------
-    | Configuración de Uploads
+    | Configuración de Uploads Locales
     |--------------------------------------------------------------------------
     */
 
@@ -276,6 +277,105 @@ return [
             'audio' => 'pandilla/audio',
             'video' => 'pandilla/video',
         ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Configuración de Direct Upload (Cloudflare R2)
+    |--------------------------------------------------------------------------
+    |
+    | Límites y tipos permitidos para uploads directos al CDN.
+    | Estos valores se usan tanto en backend como frontend.
+    |
+    */
+
+    'direct_upload' => [
+        'presigned_url_expiry' => 60, // minutos
+
+        'videos' => [
+            'max_size' => 5 * 1024 * 1024 * 1024, // 5GB
+            'mime_types' => [
+                'video/mp4',
+                'video/webm',
+                'video/quicktime',
+                'video/x-msvideo',
+            ],
+        ],
+
+        'audios' => [
+            'max_size' => 500 * 1024 * 1024, // 500MB
+            'mime_types' => [
+                'audio/mpeg',
+                'audio/wav',
+                'audio/ogg',
+                'audio/mp4',
+                'audio/x-m4a',
+            ],
+        ],
+
+        'thumbnails' => [
+            'max_size' => 10 * 1024 * 1024, // 10MB
+            'mime_types' => [
+                'image/jpeg',
+                'image/png',
+                'image/webp',
+            ],
+        ],
+
+        'documents' => [
+            'max_size' => 50 * 1024 * 1024, // 50MB
+            'mime_types' => [
+                'application/pdf',
+            ],
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Procesamiento de Imágenes
+    |--------------------------------------------------------------------------
+    |
+    | Configuración de tamaños y calidad para cada tipo de imagen.
+    | Cada tipo define: original (resize), thumbnail, y calidad JPEG.
+    |
+    */
+
+    'image_sizes' => [
+        'estandartes' => [
+            'original' => ['width' => 800, 'height' => 1067],
+            'thumbnail' => ['width' => 300, 'height' => 400],
+            'quality' => 85,
+            'aspect' => '3:4', // vertical
+        ],
+        'presidentes' => [
+            'original' => ['width' => 500, 'height' => 500],
+            'thumbnail' => ['width' => 150, 'height' => 150],
+            'quality' => 85,
+            'aspect' => '1:1', // cuadrado
+        ],
+        'publicaciones' => [
+            'original' => ['width' => 600, 'height' => 900],
+            'thumbnail' => ['width' => 200, 'height' => 300],
+            'quality' => 85,
+            'aspect' => '2:3', // portada
+        ],
+        'distinciones' => [
+            'original' => ['width' => 800, 'height' => 600],
+            'thumbnail' => ['width' => 300, 'height' => 225],
+            'quality' => 85,
+            'aspect' => 'flexible', // mantiene aspecto original
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Configuración WebP
+    |--------------------------------------------------------------------------
+    */
+
+    'webp' => [
+        'enabled' => true,
+        'quality' => 80,
     ],
 
     /*

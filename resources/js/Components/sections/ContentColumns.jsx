@@ -8,14 +8,15 @@ import React from 'react';
 import {
   Scale, FileText, Shield, Flag, Users,
   Video, Music, Award, Newspaper, Megaphone,
-  Play, Download, Calendar, User, FileIcon, GripVertical,
-  ChevronLeft, ChevronRight, ExternalLink
+  Play, Pause, Download, Calendar, User, FileIcon, GripVertical,
+  ChevronLeft, ChevronRight, ExternalLink, Volume2, VolumeX, Loader2
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, storageUrl } from '@/lib/utils';
 import { Badge } from '@/Components/ui/badge';
 import { Button } from '@/Components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
 import { AspectRatio } from '@/Components/ui/aspect-ratio';
+import { Slider } from '@/Components/ui/slider';
 import { MotionWrapper } from '@/Components/motion/MotionWrapper';
 import {
   DndContext,
@@ -47,6 +48,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/Components/ui/dialog';
+import { ImageLightbox } from '@/Components/ui/image-lightbox';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CONSTANTS - Valores configurables (extraer a config/i18n si necesario)
@@ -302,59 +304,557 @@ const DocumentViewer = React.memo(function DocumentViewer({ documents, icon: Ico
 const DocumentGrid = DocumentViewer;
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// VIDEO CARD
+// MEDIA CONTEXT - Coordina que solo 1 media (video O audio) se reproduzca a la vez
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const VideoCard = React.memo(function VideoCard({ video }) {
+const MediaContext = React.createContext({
+  activeMediaId: null,
+  activeMediaType: null, // 'video' | 'audio'
+  setActiveMedia: () => {},
+  modalOpen: false,
+  setModalOpen: () => {},
+});
+
+const MediaProvider = ({ children }) => {
+  const [activeMediaId, setActiveMediaId] = React.useState(null);
+  const [activeMediaType, setActiveMediaType] = React.useState(null);
+  const [modalOpen, setModalOpen] = React.useState(false);
+
+  const setActiveMedia = React.useCallback((id, type) => {
+    setActiveMediaId(id);
+    setActiveMediaType(type);
+  }, []);
+
+  const value = React.useMemo(() => ({
+    activeMediaId,
+    activeMediaType,
+    setActiveMedia,
+    modalOpen,
+    setModalOpen,
+  }), [activeMediaId, activeMediaType, setActiveMedia, modalOpen]);
+
   return (
-    <Card className="overflow-hidden border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-lg group">
-      <AspectRatio ratio={16 / 9}>
-        <div className="relative w-full h-full bg-muted">
-          {video.thumbnail ? (
-            <img
-              src={video.thumbnail}
-              alt={video.titulo}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
-              <Video className="h-12 w-12 text-primary/50" />
+    <MediaContext.Provider value={value}>
+      {children}
+    </MediaContext.Provider>
+  );
+};
+
+const useMediaContext = () => React.useContext(MediaContext);
+
+// Aliases for backward compatibility - videos pause when ANY media is active
+const VideoContext = MediaContext;
+const VideoProvider = MediaProvider;
+const useVideoContext = () => {
+  const ctx = useMediaContext();
+  const videoId = ctx.activeMediaType === 'video' ? ctx.activeMediaId : null;
+  return {
+    // Return actual activeMediaId so videos know when ANY media is playing (including audio)
+    activeVideoId: ctx.activeMediaId,
+    // But track if THIS is a video
+    isVideoActive: ctx.activeMediaType === 'video',
+    setActiveVideo: (id) => ctx.setActiveMedia(id, 'video'),
+    modalOpen: ctx.modalOpen,
+    setModalOpen: ctx.setModalOpen,
+    // Expose raw context for advanced checks
+    activeMediaType: ctx.activeMediaType,
+  };
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// VIDEO MODAL CAROUSEL - Fullscreen modal con navegación entre videos
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const VideoModalCarousel = React.memo(function VideoModalCarousel({
+  videos,
+  currentIndex,
+  isOpen,
+  onClose,
+  onNavigate
+}) {
+  const videoRef = React.useRef(null);
+  const { setModalOpen } = useVideoContext();
+  const [localIndex, setLocalIndex] = React.useState(currentIndex);
+
+  // Sync with external index when modal opens
+  React.useEffect(() => {
+    if (isOpen) {
+      setLocalIndex(currentIndex);
+    }
+  }, [isOpen, currentIndex]);
+
+  // Sync modal state with context
+  React.useEffect(() => {
+    setModalOpen(isOpen);
+  }, [isOpen, setModalOpen]);
+
+  // Pause video on close or navigate
+  React.useEffect(() => {
+    if (!isOpen && videoRef.current) {
+      videoRef.current.pause();
+    }
+  }, [isOpen]);
+
+  const currentVideo = videos?.[localIndex];
+  const hasMultiple = videos?.length > 1;
+  const total = videos?.length || 0;
+
+  // Navigation handlers
+  const goToPrev = React.useCallback(() => {
+    if (videoRef.current) videoRef.current.pause();
+    const newIndex = localIndex === 0 ? total - 1 : localIndex - 1;
+    setLocalIndex(newIndex);
+    onNavigate?.(newIndex);
+  }, [localIndex, total, onNavigate]);
+
+  const goToNext = React.useCallback(() => {
+    if (videoRef.current) videoRef.current.pause();
+    const newIndex = localIndex === total - 1 ? 0 : localIndex + 1;
+    setLocalIndex(newIndex);
+    onNavigate?.(newIndex);
+  }, [localIndex, total, onNavigate]);
+
+  // Keyboard navigation
+  React.useEffect(() => {
+    if (!isOpen || !hasMultiple) return;
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'ArrowLeft') goToPrev();
+      if (e.key === 'ArrowRight') goToNext();
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, hasMultiple, goToPrev, goToNext]);
+
+  if (!currentVideo) return null;
+
+  const videoUrl = currentVideo.playable_url || currentVideo.r2_video_url || currentVideo.url_video;
+  const isYouTube = currentVideo.tipo_fuente === 'youtube';
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-5xl w-[95vw] p-0 gap-0 overflow-hidden">
+        <DialogHeader className="p-4 pb-2 border-b">
+          <div className="flex items-center justify-between pr-8">
+            <div className="min-w-0 flex-1">
+              <DialogTitle className="line-clamp-1">{currentVideo.titulo}</DialogTitle>
+              {currentVideo.descripcion && (
+                <DialogDescription className="line-clamp-1">
+                  {currentVideo.descripcion}
+                </DialogDescription>
+              )}
             </div>
-          )}
-          <a
-            href={video.url_video}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-all duration-300"
-          >
-            <div className="p-4 rounded-full bg-white/30 transform scale-75 group-hover:scale-100 transition-transform">
-              <Play className="h-8 w-8 text-white fill-white" />
-            </div>
-          </a>
-          {video.duracion && (
-            <Badge className="absolute bottom-2 right-2 bg-black/80 text-white">
-              {video.duracion}
-            </Badge>
+            {hasMultiple && (
+              <Badge variant="secondary" className="ml-3 shrink-0">
+                {localIndex + 1} / {total}
+              </Badge>
+            )}
+          </div>
+        </DialogHeader>
+
+        <div className="relative bg-muted">
+          <AspectRatio ratio={16 / 9}>
+            {isYouTube ? (
+              <iframe
+                key={currentVideo.id}
+                src={`https://www.youtube.com/embed/${currentVideo.video_id}?autoplay=1&rel=0`}
+                title={currentVideo.titulo}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="w-full h-full border-0"
+              />
+            ) : (
+              <video
+                key={currentVideo.id}
+                ref={videoRef}
+                src={videoUrl}
+                controls
+                autoPlay
+                playsInline
+                className="w-full h-full bg-muted"
+              >
+                Tu navegador no soporta el elemento video.
+              </video>
+            )}
+          </AspectRatio>
+
+          {/* Navigation arrows on video */}
+          {hasMultiple && (
+            <>
+              <button
+                onClick={goToPrev}
+                className="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/80 hover:bg-background text-foreground shadow-lg transition-all hover:scale-110"
+                aria-label="Video anterior"
+              >
+                <ChevronLeft className="h-6 w-6" />
+              </button>
+              <button
+                onClick={goToNext}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/80 hover:bg-background text-foreground shadow-lg transition-all hover:scale-110"
+                aria-label="Video siguiente"
+              >
+                <ChevronRight className="h-6 w-6" />
+              </button>
+            </>
           )}
         </div>
-      </AspectRatio>
-      <CardContent className="p-4">
-        <h4 className="font-semibold line-clamp-2 group-hover:text-primary transition-colors">
-          {video.titulo}
-        </h4>
-        {video.descripcion && (
-          <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-            {video.descripcion}
-          </p>
-        )}
-        <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-          {video.anio && <span>{video.anio}</span>}
-          {video.categoria && (
-            <Badge variant="outline" className="text-xs">{video.categoria}</Badge>
+
+        {/* Footer with info + unified navigation */}
+        <div className="p-4 border-t bg-muted/30">
+          {/* Video info */}
+          <div className="flex items-center gap-3 text-sm text-muted-foreground mb-3">
+            {currentVideo.duracion && (
+              <span className="flex items-center gap-1">
+                <Play className="h-3 w-3" /> {currentVideo.duracion}
+              </span>
+            )}
+            {currentVideo.anio && <span>{currentVideo.anio}</span>}
+            {currentVideo.categoria && (
+              <Badge variant="outline" className="text-xs">{currentVideo.categoria}</Badge>
+            )}
+          </div>
+
+          {/* Unified navigation: Anterior | dots | Siguiente */}
+          {hasMultiple && (
+            <div className="flex items-center justify-center gap-4">
+              <Button variant="outline" size="sm" onClick={goToPrev} className="h-8">
+                <ChevronLeft className="h-4 w-4 mr-1" /> {STRINGS.previous}
+              </Button>
+              <div className="flex gap-1.5">
+                {videos.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      if (videoRef.current) videoRef.current.pause();
+                      setLocalIndex(idx);
+                      onNavigate?.(idx);
+                    }}
+                    className={cn(
+                      "w-2 h-2 rounded-full transition-colors",
+                      idx === localIndex ? "bg-primary" : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
+                    )}
+                    aria-label={`Ir a video ${idx + 1}`}
+                  />
+                ))}
+              </div>
+              <Button variant="outline" size="sm" onClick={goToNext} className="h-8">
+                {STRINGS.next} <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
           )}
         </div>
-      </CardContent>
-    </Card>
+      </DialogContent>
+    </Dialog>
+  );
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// VIDEO CARD - TikTok style: inline video + optional fullscreen
+// Solo 1 video activo a la vez, se pausa cuando modal está abierto
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const VideoCard = React.memo(function VideoCard({ video, onOpenFullscreen }) {
+  const [isPlaying, setIsPlaying] = React.useState(false);
+  const [isMuted, setIsMuted] = React.useState(true);
+  const [showControls, setShowControls] = React.useState(false);
+  const [isVisible, setIsVisible] = React.useState(false);
+  const [isVideoReady, setIsVideoReady] = React.useState(false);
+  const [isBuffering, setIsBuffering] = React.useState(false);
+  const videoRef = React.useRef(null);
+  const cardRef = React.useRef(null);
+
+  const { activeVideoId, setActiveVideo, modalOpen, activeMediaType } = useVideoContext();
+
+  const videoUrl = video.playable_url || video.r2_video_url || video.url_video;
+  const thumbnailUrl = video.thumbnail_url || storageUrl(video.thumbnail);
+  const isCloudflare = video.tipo_fuente === 'cloudflare';
+  const isYouTube = video.tipo_fuente === 'youtube';
+  const canPlayInline = isCloudflare || (!isYouTube && videoUrl);
+
+  const isThisActive = activeVideoId === video.id;
+  const isAudioPlaying = activeMediaType === 'audio';
+
+  // Video ready state handlers
+  const handleCanPlay = React.useCallback(() => {
+    setIsVideoReady(true);
+    setIsBuffering(false);
+  }, []);
+
+  const handleWaiting = React.useCallback(() => {
+    setIsBuffering(true);
+  }, []);
+
+  const handlePlaying = React.useCallback(() => {
+    setIsBuffering(false);
+  }, []);
+
+  // Pause when another video becomes active OR modal opens
+  React.useEffect(() => {
+    if ((!isThisActive && activeVideoId !== null) || modalOpen) {
+      if (videoRef.current && isPlaying) {
+        videoRef.current.pause();
+        setIsPlaying(false);
+      }
+    }
+  }, [activeVideoId, isThisActive, modalOpen, isPlaying]);
+
+  // IntersectionObserver para detectar visibilidad
+  React.useEffect(() => {
+    if (!canPlayInline || !cardRef.current) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const visible = entry.isIntersecting && entry.intersectionRatio > 0.6;
+          setIsVisible(visible);
+
+          // NO auto-reproducir si hay un audio activo o modal abierto
+          if (visible && !modalOpen && !isAudioPlaying) {
+            // Video visible y no hay modal ni audio - reproducir
+            if (videoRef.current && !isPlaying) {
+              setActiveVideo(video.id);
+              videoRef.current.play().catch(() => {});
+              setIsPlaying(true);
+            }
+          } else if (!visible) {
+            // Video no visible - pausar
+            if (videoRef.current && isPlaying) {
+              videoRef.current.pause();
+              setIsPlaying(false);
+              if (isThisActive) {
+                setActiveVideo(null);
+              }
+            }
+          }
+        });
+      },
+      { threshold: [0, 0.6, 1] }
+    );
+
+    observer.observe(cardRef.current);
+    return () => observer.disconnect();
+  }, [canPlayInline, isPlaying, modalOpen, video.id, setActiveVideo, isThisActive, isAudioPlaying]);
+
+  // Toggle mute
+  const toggleMute = (e) => {
+    e.stopPropagation();
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted;
+      setIsMuted(!isMuted);
+    }
+  };
+
+  // Toggle play/pause - click anywhere on video to pause/play
+  const togglePlay = React.useCallback((e) => {
+    e?.stopPropagation();
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+        setIsPlaying(false);
+        setActiveVideo(null); // Clear active media
+      } else {
+        setActiveVideo(video.id); // Mark as active (will pause any audio)
+        videoRef.current.play().catch(() => {});
+        setIsPlaying(true);
+      }
+    }
+  }, [isPlaying, video.id, setActiveVideo]);
+
+  // Open fullscreen modal - pause inline first
+  const openFullscreen = (e) => {
+    e.stopPropagation();
+    // Pause inline video before opening modal
+    if (videoRef.current) {
+      videoRef.current.pause();
+      setIsPlaying(false);
+    }
+    // Use callback if provided (carousel mode), otherwise no-op
+    onOpenFullscreen?.();
+  };
+
+  return (
+    <>
+      <Card
+        ref={cardRef}
+        className="overflow-hidden border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-lg group"
+        onMouseEnter={() => setShowControls(true)}
+        onMouseLeave={() => setShowControls(false)}
+      >
+        <AspectRatio ratio={16 / 9}>
+          <div className="relative w-full h-full bg-muted">
+            {canPlayInline ? (
+              <>
+                {/* Thumbnail overlay - ALWAYS visible initially, fades when video plays */}
+                <div
+                  className={cn(
+                    "absolute inset-0 z-10 transition-opacity duration-500 bg-muted",
+                    (isVideoReady && isPlaying && !isBuffering) ? "opacity-0 pointer-events-none" : "opacity-100"
+                  )}
+                >
+                  {thumbnailUrl ? (
+                    <img
+                      src={thumbnailUrl}
+                      alt={video.titulo}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
+                      <Video className="h-12 w-12 text-primary/50" />
+                    </div>
+                  )}
+                  {/* Loading spinner when buffering */}
+                  {isBuffering && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-sm">
+                      <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Video inline - hidden until ready */}
+                <video
+                  ref={videoRef}
+                  src={videoUrl}
+                  muted={isMuted}
+                  loop
+                  playsInline
+                  preload="metadata"
+                  className={cn(
+                    "w-full h-full object-cover",
+                    !isVideoReady && "invisible"
+                  )}
+                  onClick={togglePlay}
+                  onCanPlay={handleCanPlay}
+                  onWaiting={handleWaiting}
+                  onPlaying={handlePlaying}
+                />
+
+                {/* Controls overlay */}
+                <div className={cn(
+                  "absolute inset-0 flex items-center justify-center transition-opacity duration-200 pointer-events-none",
+                  showControls || !isPlaying ? "opacity-100" : "opacity-0"
+                )}>
+                  {/* Play/Pause center button */}
+                  {!isPlaying && (
+                    <button
+                      onClick={togglePlay}
+                      className="p-4 rounded-full bg-black/50 hover:bg-black/70 transition-colors pointer-events-auto"
+                    >
+                      <Play className="h-10 w-10 text-white fill-white" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Bottom controls bar */}
+                <div className={cn(
+                  "absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent flex items-center justify-between transition-opacity duration-200",
+                  showControls ? "opacity-100" : "opacity-0"
+                )}>
+                  <div className="flex items-center gap-2">
+                    {/* Play/Pause */}
+                    <button
+                      onClick={togglePlay}
+                      className="p-1.5 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
+                      aria-label={isPlaying ? "Pausar" : "Reproducir"}
+                    >
+                      {isPlaying ? (
+                        <svg className="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                          <rect x="6" y="4" width="4" height="16" />
+                          <rect x="14" y="4" width="4" height="16" />
+                        </svg>
+                      ) : (
+                        <Play className="h-4 w-4 text-white fill-white" />
+                      )}
+                    </button>
+
+                    {/* Mute/Unmute */}
+                    <button
+                      onClick={toggleMute}
+                      className="p-1.5 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
+                      aria-label={isMuted ? "Activar sonido" : "Silenciar"}
+                    >
+                      {isMuted ? (
+                        <svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <path d="M11 5L6 9H2v6h4l5 4V5z" />
+                          <line x1="23" y1="9" x2="17" y2="15" />
+                          <line x1="17" y1="9" x2="23" y2="15" />
+                        </svg>
+                      ) : (
+                        <svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <path d="M11 5L6 9H2v6h4l5 4V5z" />
+                          <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Fullscreen button */}
+                  <button
+                    onClick={openFullscreen}
+                    className="p-1.5 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
+                    aria-label="Pantalla completa"
+                  >
+                    <ExternalLink className="h-4 w-4 text-white" />
+                  </button>
+                </div>
+
+                {/* Duration badge */}
+                {video.duracion && !showControls && (
+                  <Badge className="absolute bottom-2 right-2 bg-black/80 text-white">
+                    {video.duracion}
+                  </Badge>
+                )}
+              </>
+            ) : (
+              // Fallback for YouTube/external - show thumbnail with play overlay
+              <>
+                {thumbnailUrl ? (
+                  <img
+                    src={thumbnailUrl}
+                    alt={video.titulo}
+                    loading="lazy"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
+                    <Video className="h-12 w-12 text-primary/50" />
+                  </div>
+                )}
+                <button
+                  onClick={() => onOpenFullscreen?.()}
+                  className="absolute inset-0 flex items-center justify-center bg-background/40 hover:bg-background/50 transition-colors"
+                >
+                  <div className="p-4 rounded-full bg-foreground/20">
+                    <Play className="h-8 w-8 text-foreground fill-foreground" />
+                  </div>
+                </button>
+                {video.duracion && (
+                  <Badge className="absolute bottom-2 right-2 bg-background/80 text-foreground">
+                    {video.duracion}
+                  </Badge>
+                )}
+              </>
+            )}
+          </div>
+        </AspectRatio>
+        <CardContent className="p-4">
+          <h4 className="font-semibold line-clamp-2 group-hover:text-primary transition-colors">
+            {video.titulo}
+          </h4>
+          {video.descripcion && (
+            <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
+              {video.descripcion}
+            </p>
+          )}
+          <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+            {video.anio && <span>{video.anio}</span>}
+            {video.categoria && (
+              <Badge variant="outline" className="text-xs">{video.categoria}</Badge>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </>
   );
 });
 
@@ -366,6 +866,8 @@ const VideoCarousel = React.memo(function VideoCarousel({ videos }) {
   const [api, setApi] = React.useState(null);
   const [current, setCurrent] = React.useState(0);
   const [count, setCount] = React.useState(0);
+  const [isModalOpen, setIsModalOpen] = React.useState(false);
+  const [modalVideoIndex, setModalVideoIndex] = React.useState(0);
 
   React.useEffect(() => {
     if (!api) return;
@@ -378,6 +880,24 @@ const VideoCarousel = React.memo(function VideoCarousel({ videos }) {
     });
   }, [api]);
 
+  // Open modal for specific video
+  const openModalForVideo = React.useCallback((index) => {
+    setModalVideoIndex(index);
+    setIsModalOpen(true);
+  }, []);
+
+  // Close modal and optionally resume inline
+  const closeModal = React.useCallback(() => {
+    setIsModalOpen(false);
+  }, []);
+
+  // Navigate in modal (also sync carousel if needed)
+  const handleModalNavigate = React.useCallback((newIndex) => {
+    setModalVideoIndex(newIndex);
+    // Optionally sync the inline carousel
+    api?.scrollTo(newIndex);
+  }, [api]);
+
   if (!videos || videos.length === 0) return null;
 
   return (
@@ -388,20 +908,49 @@ const VideoCarousel = React.memo(function VideoCarousel({ videos }) {
         className="w-full"
       >
         <CarouselContent className="-ml-4">
-          {videos.map((video) => (
+          {videos.map((video, index) => (
             <CarouselItem key={video.id} className="pl-4 basis-full">
-              <VideoCard video={video} />
+              <VideoCard
+                video={video}
+                onOpenFullscreen={() => openModalForVideo(index)}
+              />
             </CarouselItem>
           ))}
         </CarouselContent>
-        <div className="flex items-center justify-center gap-4 mt-4">
-          <CarouselPrevious className="static translate-x-0 translate-y-0" />
-          <span className="text-sm text-muted-foreground font-medium">
-            {current} / {count}
-          </span>
-          <CarouselNext className="static translate-x-0 translate-y-0" />
-        </div>
+        {/* Navigation - Unified design */}
+        {count > 1 && (
+          <div className="flex items-center justify-center gap-4 mt-4">
+            <Button variant="outline" size="sm" onClick={() => api?.scrollPrev()} className="h-8">
+              <ChevronLeft className="h-4 w-4 mr-1" /> {STRINGS.previous}
+            </Button>
+            <div className="flex gap-1.5">
+              {videos.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => api?.scrollTo(idx)}
+                  className={cn(
+                    "w-2 h-2 rounded-full transition-colors",
+                    idx === current - 1 ? "bg-primary" : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
+                  )}
+                  aria-label={`Ir a video ${idx + 1}`}
+                />
+              ))}
+            </div>
+            <Button variant="outline" size="sm" onClick={() => api?.scrollNext()} className="h-8">
+              {STRINGS.next} <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
+        )}
       </Carousel>
+
+      {/* Modal carousel for fullscreen */}
+      <VideoModalCarousel
+        videos={videos}
+        currentIndex={modalVideoIndex}
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        onNavigate={handleModalNavigate}
+      />
     </div>
   );
 });
@@ -432,35 +981,195 @@ const VideoList = React.memo(function VideoList({ videos }) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const AudioCard = React.memo(function AudioCard({ audio }) {
+  // Usar playable_url del backend (R2 o URL externa)
+  const audioUrl = audio.playable_url || audio.url_audio;
+  const audioRef = React.useRef(null);
+  const lastTimeUpdateRef = React.useRef(0);
+  const [isPlaying, setIsPlaying] = React.useState(false);
+  const [isBuffering, setIsBuffering] = React.useState(false);
+  const [currentTime, setCurrentTime] = React.useState(0);
+  const [duration, setDuration] = React.useState(0);
+  const [volume, setVolume] = React.useState(80);
+  const [isMuted, setIsMuted] = React.useState(false);
+
+  // Media context para coordinar con videos y otros audios
+  const { activeMediaId, activeMediaType, setActiveMedia, modalOpen } = useMediaContext();
+  const audioId = `audio-${audio.id}`;
+  const isThisActive = activeMediaId === audioId && activeMediaType === 'audio';
+
+  // Pausar cuando otro media se activa o modal se abre
+  React.useEffect(() => {
+    if ((!isThisActive && activeMediaId !== null) || modalOpen) {
+      if (audioRef.current && isPlaying) {
+        audioRef.current.pause();
+      }
+    }
+  }, [activeMediaId, isThisActive, modalOpen, isPlaying]);
+
+  const togglePlay = () => {
+    if (!audioRef.current) return;
+    if (isPlaying) {
+      audioRef.current.pause();
+      setActiveMedia(null, null);
+    } else {
+      setActiveMedia(audioId, 'audio'); // Esto pausará otros medios
+      audioRef.current.play().catch(() => {});
+    }
+  };
+
+  // Throttle timeUpdate para mejor performance (actualizar cada 250ms)
+  const handleTimeUpdate = React.useCallback(() => {
+    if (!audioRef.current) return;
+    const now = Date.now();
+    if (now - lastTimeUpdateRef.current > 250) {
+      setCurrentTime(audioRef.current.currentTime);
+      lastTimeUpdateRef.current = now;
+    }
+  }, []);
+
+  const handleLoadedMetadata = () => {
+    if (audioRef.current) {
+      setDuration(audioRef.current.duration);
+      setIsBuffering(false);
+    }
+  };
+
+  const handleSeek = (value) => {
+    if (!audioRef.current || !duration) return;
+    const newTime = (value[0] / 100) * duration;
+    audioRef.current.currentTime = newTime;
+    setCurrentTime(newTime);
+  };
+
+  const handleVolumeChange = (value) => {
+    const newVolume = value[0];
+    setVolume(newVolume);
+    if (audioRef.current) {
+      audioRef.current.volume = newVolume / 100;
+      setIsMuted(newVolume === 0);
+    }
+  };
+
+  const toggleMute = () => {
+    if (audioRef.current) {
+      if (isMuted) {
+        audioRef.current.volume = volume / 100;
+        setIsMuted(false);
+      } else {
+        audioRef.current.volume = 0;
+        setIsMuted(true);
+      }
+    }
+  };
+
+  const formatTime = (time) => {
+    if (!time || isNaN(time)) return '0:00';
+    const mins = Math.floor(time / 60);
+    const secs = Math.floor(time % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+
   return (
-    <Card className="border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-lg">
+    <Card className="border-border/50 hover:border-violet-500/30 transition-all duration-300 hover:shadow-lg group">
       <CardContent className="p-4">
-        <div className="flex items-start gap-4">
-          <div className="p-3 rounded-xl bg-gradient-to-br from-violet-500/20 to-purple-500/20">
-            <Music className="h-6 w-6 text-violet-500" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h4 className="font-semibold line-clamp-1">{audio.titulo}</h4>
-            {audio.interprete && (
-              <p className="text-sm text-primary font-medium">{audio.interprete}</p>
+        {/* Hidden audio element */}
+        {audioUrl && (
+          <audio
+            ref={audioRef}
+            src={audioUrl}
+            preload="metadata"
+            onPlay={() => setIsPlaying(true)}
+            onPause={() => setIsPlaying(false)}
+            onEnded={() => { setIsPlaying(false); setCurrentTime(0); setActiveMedia(null, null); }}
+            onTimeUpdate={handleTimeUpdate}
+            onLoadedMetadata={handleLoadedMetadata}
+            onWaiting={() => setIsBuffering(true)}
+            onCanPlay={() => setIsBuffering(false)}
+          />
+        )}
+
+        {/* Main layout */}
+        <div className="flex items-center gap-3">
+          {/* Play/Pause button */}
+          <button
+            onClick={togglePlay}
+            disabled={!audioUrl}
+            className={cn(
+              "flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center transition-all relative",
+              isPlaying
+                ? "bg-violet-500 text-white shadow-lg shadow-violet-500/30"
+                : "bg-violet-500/10 text-violet-500 hover:bg-violet-500 hover:text-white hover:shadow-lg hover:shadow-violet-500/30",
+              !audioUrl && "opacity-50 cursor-not-allowed"
             )}
-            {audio.compositor && (
-              <p className="text-xs text-muted-foreground">{STRINGS.composer} {audio.compositor}</p>
+          >
+            {isBuffering ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : isPlaying ? (
+              <Pause className="h-5 w-5" />
+            ) : (
+              <Play className="h-5 w-5 ml-0.5" />
             )}
-            <div className="flex items-center gap-2 mt-3">
-              {audio.duracion && (
-                <Badge variant="outline">{audio.duracion}</Badge>
-              )}
+          </button>
+
+          {/* Info + Progress */}
+          <div className="flex-1 min-w-0 space-y-1">
+            {/* Title row */}
+            <div className="flex items-center justify-between gap-2">
+              <h4 className="font-semibold text-sm line-clamp-1">{audio.titulo}</h4>
               {audio.tipo && (
-                <Badge variant="secondary" className="capitalize">{audio.tipo}</Badge>
+                <Badge variant="secondary" className="capitalize text-[10px] flex-shrink-0">
+                  {audio.tipo}
+                </Badge>
               )}
             </div>
-            {audio.url_audio && (
-              <Button variant="default" size="sm" className="mt-3" asChild>
-                <a href={audio.url_audio} target="_blank" rel="noopener noreferrer">
-                  <Play className="mr-2 h-4 w-4" /> {STRINGS.listen}
-                </a>
-              </Button>
+
+            {/* Artist */}
+            {audio.interprete && (
+              <p className="text-xs text-muted-foreground line-clamp-1">{audio.interprete}</p>
+            )}
+
+            {/* Progress bar */}
+            {audioUrl && (
+              <div className="flex items-center gap-2 pt-1">
+                <span className="text-[10px] text-muted-foreground w-8 text-right tabular-nums">
+                  {formatTime(currentTime)}
+                </span>
+                <Slider
+                  value={[progress]}
+                  max={100}
+                  step={0.1}
+                  onValueChange={handleSeek}
+                  className="flex-1 cursor-pointer [&_[role=slider]]:h-3 [&_[role=slider]]:w-3 [&_[role=slider]]:border-violet-500 [&_.bg-primary]:bg-violet-500"
+                />
+                <span className="text-[10px] text-muted-foreground w-8 tabular-nums">
+                  {formatTime(duration) || audio.duracion || '--:--'}
+                </span>
+              </div>
+            )}
+
+            {/* Volume control */}
+            {audioUrl && (
+              <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                  onClick={toggleMute}
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {isMuted || volume === 0 ? (
+                    <VolumeX className="h-3.5 w-3.5" />
+                  ) : (
+                    <Volume2 className="h-3.5 w-3.5" />
+                  )}
+                </button>
+                <Slider
+                  value={[isMuted ? 0 : volume]}
+                  max={100}
+                  step={1}
+                  onValueChange={handleVolumeChange}
+                  className="w-20 cursor-pointer [&_[role=slider]]:h-2.5 [&_[role=slider]]:w-2.5"
+                />
+              </div>
             )}
           </div>
         </div>
@@ -512,14 +1221,18 @@ const DistincionCard = React.memo(function DistincionCard({ item }) {
 // ESTANDARTE CARD
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const EstandarteCard = React.memo(function EstandarteCard({ item }) {
+const EstandarteCard = React.memo(function EstandarteCard({ item, onClick }) {
+  const imageUrl = storageUrl(item.imagen_principal);
   return (
-    <Card className="overflow-hidden border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-lg group">
+    <Card
+      className="overflow-hidden border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-lg group cursor-pointer"
+      onClick={onClick}
+    >
       <AspectRatio ratio={3 / 4}>
         <div className="relative w-full h-full bg-muted">
-          {item.imagen_principal ? (
+          {imageUrl ? (
             <img
-              src={item.imagen_principal}
+              src={imageUrl}
               alt={item.titulo}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />
@@ -531,6 +1244,12 @@ const EstandarteCard = React.memo(function EstandarteCard({ item }) {
           {item.anio && (
             <Badge className="absolute top-3 right-3 bg-black/70">{item.anio}</Badge>
           )}
+          {/* Overlay hint */}
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+            <div className="p-2 rounded-full bg-white/30 backdrop-blur-sm">
+              <ExternalLink className="h-5 w-5 text-white" />
+            </div>
+          </div>
         </div>
       </AspectRatio>
       <CardContent className="p-4">
@@ -548,17 +1267,232 @@ const EstandarteCard = React.memo(function EstandarteCard({ item }) {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// PRESIDENTE CARD
+// ESTANDARTES CAROUSEL - Con Lightbox y dots
 // ═══════════════════════════════════════════════════════════════════════════════
 
+const EstandartesCarousel = React.memo(function EstandartesCarousel({ items }) {
+  const [lightboxOpen, setLightboxOpen] = React.useState(false);
+  const [currentIndex, setCurrentIndex] = React.useState(0);
+  const [carouselApi, setCarouselApi] = React.useState(null);
+  const [currentSlide, setCurrentSlide] = React.useState(0);
+
+  // Sync carousel position with dots
+  React.useEffect(() => {
+    if (!carouselApi) return;
+    carouselApi.on('select', () => {
+      setCurrentSlide(carouselApi.selectedScrollSnap());
+    });
+  }, [carouselApi]);
+
+  const handleCardClick = (index) => {
+    setCurrentIndex(index);
+    setLightboxOpen(true);
+  };
+
+  const handleNavigate = (index) => {
+    setCurrentIndex(index);
+  };
+
+  // Prepare images for lightbox
+  const lightboxImages = items.map(item => ({
+    src: storageUrl(item.imagen_principal),
+    alt: item.titulo,
+    title: item.titulo,
+    description: item.descripcion,
+  }));
+
+  return (
+    <>
+      <Carousel
+        opts={{ align: 'start', loop: true }}
+        setApi={setCarouselApi}
+        className="w-full"
+      >
+        <CarouselContent className="-ml-2">
+          {items.map((item, index) => (
+            <CarouselItem key={item.id} className="pl-2 basis-full sm:basis-1/2">
+              <EstandarteCard
+                item={item}
+                onClick={() => handleCardClick(index)}
+              />
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+        {items.length > 2 && (
+          <>
+            <CarouselPrevious className="left-0 bg-background/80 hover:bg-background" />
+            <CarouselNext className="right-0 bg-background/80 hover:bg-background" />
+          </>
+        )}
+      </Carousel>
+
+      {/* Carousel Dots */}
+      {items.length > 1 && (
+        <div className="flex justify-center gap-2 mt-4">
+          {items.map((_, idx) => (
+            <button
+              key={idx}
+              className={cn(
+                "w-2 h-2 rounded-full transition-all",
+                idx === currentSlide
+                  ? "bg-primary w-6"
+                  : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
+              )}
+              onClick={() => carouselApi?.scrollTo(idx)}
+              aria-label={`Ir a estandarte ${idx + 1}`}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Image Lightbox */}
+      <ImageLightbox
+        open={lightboxOpen}
+        onOpenChange={setLightboxOpen}
+        images={lightboxImages}
+        currentIndex={currentIndex}
+        onNavigate={handleNavigate}
+      />
+    </>
+  );
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PRESIDENTE TIMELINE - Vista profesional para muchos presidentes
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const TIMELINE_MAX_HEIGHT = 600; // px - altura máxima antes de scroll
+
+const PresidenteTimeline = React.memo(function PresidenteTimeline({ members }) {
+  if (!members || members.length === 0) return null;
+
+  // Ordenar: actual primero, luego por año de inicio (más reciente primero)
+  const sortedMembers = React.useMemo(() => {
+    return [...members].sort((a, b) => {
+      // Actual siempre primero
+      if (a.isCurrent && !b.isCurrent) return -1;
+      if (!a.isCurrent && b.isCurrent) return 1;
+      // Luego por año (más reciente primero)
+      const yearA = a.yearStart || parseInt(a.period?.split('-')[0]?.trim()) || 0;
+      const yearB = b.yearStart || parseInt(b.period?.split('-')[0]?.trim()) || 0;
+      return yearB - yearA;
+    });
+  }, [members]);
+
+  // Usar campo isCurrent del backend, con fallback a detección por texto
+  const isCurrentPresident = (member) => {
+    if (typeof member.isCurrent === 'boolean') return member.isCurrent;
+    const period = member.period?.toLowerCase() || '';
+    return period.includes('presente') || period.includes('actual') ||
+           member.role?.toLowerCase().includes('actual');
+  };
+
+  return (
+    <div
+      className="relative overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent"
+      style={{ maxHeight: TIMELINE_MAX_HEIGHT }}
+    >
+      {/* Línea vertical central */}
+      <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary via-primary/50 to-primary/20" />
+
+      <div className="space-y-1">
+        {sortedMembers.map((member, index) => {
+          const isCurrent = isCurrentPresident(member);
+
+          return (
+            <div
+              key={member.id || index}
+              className={cn(
+                "relative pl-14 pr-2 py-3 rounded-lg transition-all duration-200",
+                "hover:bg-muted/50",
+                isCurrent && "bg-primary/5 border-l-2 border-l-primary"
+              )}
+            >
+              {/* Nodo del timeline */}
+              <div className={cn(
+                "absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full border-2 transition-all",
+                isCurrent
+                  ? "bg-primary border-primary shadow-lg shadow-primary/30"
+                  : "bg-background border-primary/50"
+              )}>
+                {isCurrent && (
+                  <span className="absolute inset-0 rounded-full bg-primary animate-ping opacity-30" />
+                )}
+              </div>
+
+              {/* Contenido */}
+              <div className="flex items-center gap-3">
+                {/* Avatar pequeño */}
+                <div className={cn(
+                  "shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold",
+                  isCurrent
+                    ? "bg-primary text-primary-foreground ring-2 ring-primary/30"
+                    : "bg-muted text-muted-foreground"
+                )}>
+                  {member.avatar ? (
+                    <img
+                      src={storageUrl(member.avatar)}
+                      alt={member.name}
+                      className="w-full h-full rounded-full object-cover"
+                    />
+                  ) : (
+                    getInitials(member.name)
+                  )}
+                </div>
+
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h4 className={cn(
+                      "font-semibold text-sm truncate",
+                      isCurrent && "text-primary"
+                    )}>
+                      {member.name}
+                    </h4>
+                    {isCurrent && (
+                      <Badge variant="default" className="text-[10px] px-1.5 py-0">
+                        Actual
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {member.role}
+                  </p>
+                </div>
+
+                {/* Periodo */}
+                <div className="shrink-0 text-right">
+                  <span className={cn(
+                    "text-xs font-mono",
+                    isCurrent ? "text-primary font-semibold" : "text-muted-foreground"
+                  )}>
+                    {member.period}
+                  </span>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Indicador de más items si hay scroll */}
+      {sortedMembers.length > 8 && (
+        <div className="sticky bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-card to-transparent pointer-events-none" />
+      )}
+    </div>
+  );
+});
+
+// Card individual (mantener para otros usos)
 const PresidenteCard = React.memo(function PresidenteCard({ member }) {
+  const avatarUrl = storageUrl(member.avatar);
   return (
     <Card className="border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-lg">
       <CardContent className="p-6 text-center">
         <div className="relative w-20 h-20 mx-auto mb-4">
-          {member.avatar ? (
+          {avatarUrl ? (
             <img
-              src={member.avatar}
+              src={avatarUrl}
               alt={member.name}
               className="w-full h-full rounded-full object-cover ring-4 ring-primary/20"
             />
@@ -583,13 +1517,14 @@ const PresidenteCard = React.memo(function PresidenteCard({ member }) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const PublicacionCard = React.memo(function PublicacionCard({ item }) {
+  const imageUrl = storageUrl(item.imagen_portada);
   return (
     <Card className="overflow-hidden border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-lg group">
       <AspectRatio ratio={3 / 4}>
         <div className="relative w-full h-full bg-muted">
-          {item.imagen_portada ? (
+          {imageUrl ? (
             <img
-              src={item.imagen_portada}
+              src={imageUrl}
               alt={item.titulo}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />
@@ -764,13 +1699,7 @@ const PanelRenderer = React.memo(function PanelRenderer({ panelId, data }) {
           <DistincionCard key={item.id} item={item} />
         ));
       case 'estandartes-grid':
-        return (
-          <div className="grid grid-cols-2 gap-4">
-            {items.map(item => (
-              <EstandarteCard key={item.id} item={item} />
-            ))}
-          </div>
-        );
+        return <EstandartesCarousel items={items} />;
       case 'publicaciones-grid':
         return (
           <div className="grid grid-cols-2 gap-4">
@@ -780,13 +1709,7 @@ const PanelRenderer = React.memo(function PanelRenderer({ panelId, data }) {
           </div>
         );
       case 'presidentes-grid':
-        return (
-          <div className="grid grid-cols-2 gap-4">
-            {items.map(item => (
-              <PresidenteCard key={item.id} member={item} />
-            ))}
-          </div>
-        );
+        return <PresidenteTimeline members={items} />;
       case 'comunicados':
         return items.map(item => (
           <ComunicadoCard key={item.id} item={item} />
@@ -937,41 +1860,43 @@ export function ContentColumns({
   }, []);
 
   return (
-    <section className={cn("py-8 md:py-12", className)}>
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <MotionWrapper direction="up" className="text-center mb-8">
-          <h2 className="text-2xl md:text-3xl font-bold mb-2">{STRINGS.sectionTitle}</h2>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            {STRINGS.sectionSubtitle}
-          </p>
-        </MotionWrapper>
+    <MediaProvider>
+      <section className={cn("py-8 md:py-12", className)}>
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Header */}
+          <MotionWrapper direction="up" className="text-center mb-8">
+            <h2 className="text-2xl md:text-3xl font-bold mb-2">{STRINGS.sectionTitle}</h2>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              {STRINGS.sectionSubtitle}
+            </p>
+          </MotionWrapper>
 
-        {/* Grid de paneles con @dnd-kit */}
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext
-            items={activePanels}
-            strategy={rectSortingStrategy}
+          {/* Grid de paneles con @dnd-kit */}
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
           >
-            <div role="list" className="flex flex-wrap gap-6">
-              {activePanels.map((panelId, index) => (
-                <SortablePanel
-                  key={panelId}
-                  id={panelId}
-                  panelNumber={index + 1}
-                  totalPanels={activePanels.length}
-                  data={data}
-                />
-              ))}
-            </div>
-          </SortableContext>
-        </DndContext>
-      </div>
-    </section>
+            <SortableContext
+              items={activePanels}
+              strategy={rectSortingStrategy}
+            >
+              <div role="list" className="flex flex-wrap gap-6">
+                {activePanels.map((panelId, index) => (
+                  <SortablePanel
+                    key={panelId}
+                    id={panelId}
+                    panelNumber={index + 1}
+                    totalPanels={activePanels.length}
+                    data={data}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
+        </div>
+      </section>
+    </MediaProvider>
   );
 }
 

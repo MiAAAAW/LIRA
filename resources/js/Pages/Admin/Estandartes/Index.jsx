@@ -6,9 +6,33 @@ export default function Index({ items }) {
   const columns = [
     { key: 'imagen_principal', label: 'Imagen', type: 'image' },
     { key: 'titulo', label: 'Título' },
-    { key: 'tipo', label: 'Tipo' },
-    { key: 'anio', label: 'Año' },
     { key: 'is_published', label: 'Estado', type: 'badge' },
+  ];
+
+  // Campos simplificados para el modal - solo titulo e imagen
+  const formFields = [
+    {
+      name: 'titulo',
+      label: 'Título',
+      required: true,
+      placeholder: 'Ej: Estandarte del Centenario',
+    },
+    {
+      name: 'descripcion',
+      label: 'Descripción (opcional)',
+      type: 'textarea',
+      rows: 2,
+      placeholder: 'Breve descripción del estandarte',
+      fullWidth: true,
+    },
+    {
+      name: 'imagen_principal',
+      label: 'Imagen',
+      type: 'image',
+      required: true,
+      helpText: 'Imagen del estandarte (JPG, PNG, max 5MB)',
+      fullWidth: true,
+    },
   ];
 
   return (
@@ -21,10 +45,14 @@ export default function Index({ items }) {
         title="Estandartes del Conjunto"
         data={items.data}
         columns={columns}
-        createRoute="/admin/estandartes/create"
-        createLabel="Agregar estandarte"
-        editRoute="/admin/estandartes/:id/edit"
+        formFields={formFields}
+        storeRoute="/admin/estandartes"
+        updateRoute="/admin/estandartes/:id"
         deleteRoute="/admin/estandartes/:id"
+        modalTitleCreate="Nuevo Estandarte"
+        modalTitleEdit="Editar Estandarte"
+        modalDescription="Sube la imagen del estandarte con su información básica."
+        createLabel="Agregar estandarte"
         emptyMessage="No hay estandartes"
         emptyIcon="Flag"
         pagination={items}

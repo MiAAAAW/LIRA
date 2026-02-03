@@ -4,13 +4,17 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Estandarte;
+use App\Services\ImageProcessingService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class EstandarteController extends Controller
 {
+    public function __construct(
+        protected ImageProcessingService $imageService
+    ) {}
+
     public function index(): Response
     {
         $items = Estandarte::orderBy('orden')
@@ -19,14 +23,6 @@ class EstandarteController extends Controller
 
         return Inertia::render('Admin/Estandartes/Index', [
             'items' => $items,
-            'tipos' => config('pandilla.tipos_estandarte'),
-        ]);
-    }
-
-    public function create(): Response
-    {
-        return Inertia::render('Admin/Estandartes/Create', [
-            'tipos' => config('pandilla.tipos_estandarte'),
         ]);
     }
 
@@ -34,33 +30,22 @@ class EstandarteController extends Controller
     {
         $validated = $request->validate([
             'titulo' => 'required|string|max:255',
-            'tipo' => 'required|string',
-            'anio' => 'nullable|integer|min:1900|max:2100',
-            'autor' => 'nullable|string|max:255',
-            'donante' => 'nullable|string|max:255',
-            'descripcion' => 'required|string',
-            'historia' => 'nullable|string',
+            'descripcion' => 'nullable|string',
             'imagen_principal' => 'required|image|max:5120',
-            'galeria' => 'nullable|array',
-            'galeria.*' => 'image|max:5120',
-            'dimensiones' => 'nullable|string|max:100',
-            'materiales' => 'nullable|string|max:255',
-            'ubicacion_actual' => 'nullable|string|max:255',
             'orden' => 'nullable|integer',
             'is_published' => 'boolean',
             'is_featured' => 'boolean',
         ]);
 
-        $validated['imagen_principal'] = $request->file('imagen_principal')
-            ->store(config('pandilla.uploads.paths.images'), 'public');
+        // Set defaults
+        $validated['orden'] = $validated['orden'] ?? 0;
 
-        if ($request->hasFile('galeria')) {
-            $galeria = [];
-            foreach ($request->file('galeria') as $file) {
-                $galeria[] = $file->store(config('pandilla.uploads.paths.images'), 'public');
-            }
-            $validated['galeria'] = $galeria;
-        }
+        // Procesar imagen con el servicio
+        $paths = $this->imageService->process(
+            $request->file('imagen_principal'),
+            'estandartes'
+        );
+        $validated['imagen_principal'] = $paths['original'];
 
         Estandarte::create($validated);
 
@@ -68,61 +53,28 @@ class EstandarteController extends Controller
             ->with('success', 'Estandarte creado correctamente');
     }
 
-    public function show(Estandarte $estandarte): Response
-    {
-        return Inertia::render('Admin/Estandartes/Show', [
-            'item' => $estandarte,
-        ]);
-    }
-
-    public function edit(Estandarte $estandarte): Response
-    {
-        return Inertia::render('Admin/Estandartes/Edit', [
-            'item' => $estandarte,
-            'tipos' => config('pandilla.tipos_estandarte'),
-        ]);
-    }
-
     public function update(Request $request, Estandarte $estandarte)
     {
         $validated = $request->validate([
             'titulo' => 'required|string|max:255',
-            'tipo' => 'required|string',
-            'anio' => 'nullable|integer|min:1900|max:2100',
-            'autor' => 'nullable|string|max:255',
-            'donante' => 'nullable|string|max:255',
-            'descripcion' => 'required|string',
-            'historia' => 'nullable|string',
+            'descripcion' => 'nullable|string',
             'imagen_principal' => 'nullable|image|max:5120',
-            'galeria' => 'nullable|array',
-            'galeria.*' => 'image|max:5120',
-            'dimensiones' => 'nullable|string|max:100',
-            'materiales' => 'nullable|string|max:255',
-            'ubicacion_actual' => 'nullable|string|max:255',
             'orden' => 'nullable|integer',
             'is_published' => 'boolean',
             'is_featured' => 'boolean',
         ]);
 
-        if ($request->hasFile('imagen_principal')) {
-            if ($estandarte->imagen_principal) {
-                Storage::disk('public')->delete($estandarte->imagen_principal);
-            }
-            $validated['imagen_principal'] = $request->file('imagen_principal')
-                ->store(config('pandilla.uploads.paths.images'), 'public');
-        }
+        // Set defaults
+        $validated['orden'] = $validated['orden'] ?? 0;
 
-        if ($request->hasFile('galeria')) {
-            if ($estandarte->galeria) {
-                foreach ($estandarte->galeria as $img) {
-                    Storage::disk('public')->delete($img);
-                }
-            }
-            $galeria = [];
-            foreach ($request->file('galeria') as $file) {
-                $galeria[] = $file->store(config('pandilla.uploads.paths.images'), 'public');
-            }
-            $validated['galeria'] = $galeria;
+        if ($request->hasFile('imagen_principal')) {
+            // Procesar nueva imagen y eliminar anterior automáticamente
+            $paths = $this->imageService->process(
+                $request->file('imagen_principal'),
+                'estandartes',
+                $estandarte->imagen_principal
+            );
+            $validated['imagen_principal'] = $paths['original'];
         }
 
         $estandarte->update($validated);
@@ -133,6 +85,11 @@ class EstandarteController extends Controller
 
     public function destroy(Estandarte $estandarte)
     {
+        // Eliminar todas las variantes de imagen
+        if ($estandarte->imagen_principal) {
+            $this->imageService->delete($estandarte->imagen_principal, 'estandartes');
+        }
+
         $estandarte->delete();
 
         return redirect()->route('admin.estandartes.index')

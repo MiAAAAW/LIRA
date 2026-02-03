@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\HasProcessedImages;
 use App\Traits\HasPublishedScope;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Publicacion extends Model
 {
-    use HasFactory, SoftDeletes, HasPublishedScope;
+    use HasFactory, SoftDeletes, HasPublishedScope, HasProcessedImages;
 
     protected $table = 'publicaciones';
 
@@ -41,6 +42,12 @@ class Publicacion extends Model
         'is_featured' => 'boolean',
     ];
 
+    protected $appends = [
+        'image_url',
+        'thumbnail_url',
+        'webp_url',
+    ];
+
     public const TIPOS = [
         'libro' => 'Libro',
         'revista' => 'Revista',
@@ -55,5 +62,21 @@ class Publicacion extends Model
     public function esGratuito(): bool
     {
         return is_null($this->precio) || $this->precio == 0;
+    }
+
+    /**
+     * Tipo de imagen para procesamiento
+     */
+    public function getImageType(): string
+    {
+        return 'publicaciones';
+    }
+
+    /**
+     * Campo de imagen principal
+     */
+    public function getImageField(): string
+    {
+        return 'imagen_portada';
     }
 }
