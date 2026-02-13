@@ -18,6 +18,7 @@ class Distincion extends Model
         'tipo',
         'otorgante',
         'fecha_otorgamiento',
+        'descripcion',
         'r2_pdf_key',
         'r2_pdf_url',
         'documento_pdf', // legacy, mantener para compatibilidad

@@ -223,9 +223,10 @@ return [
     'tipos_publicacion' => [
         'libro' => 'Libro',
         'revista' => 'Revista',
-        'articulo' => 'Artículo',
-        'investigacion' => 'Investigación',
+        'articulo' => 'Articulo',
+        'investigacion' => 'Investigacion',
         'tesis' => 'Tesis',
+        'otro' => 'Otro',
     ],
 
     /*

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Comunicado;
+use App\Models\SiteSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -19,13 +20,7 @@ class ComunicadoController extends Controller
         return Inertia::render('Admin/Comunicados/Index', [
             'items' => $items,
             'tipos' => config('pandilla.tipos_comunicado'),
-        ]);
-    }
-
-    public function create(): Response
-    {
-        return Inertia::render('Admin/Comunicados/Create', [
-            'tipos' => config('pandilla.tipos_comunicado'),
+            'sectionVisible' => SiteSetting::isSectionVisible('comunicados'),
         ]);
     }
 
@@ -36,11 +31,9 @@ class ComunicadoController extends Controller
             'tipo' => 'required|string',
             'numero' => 'nullable|string|max:50',
             'fecha' => 'required|date',
-            'extracto' => 'required|string|max:500',
+            'extracto' => 'nullable|string|max:500',
             'contenido' => 'required|string',
             'imagen' => 'nullable|image|max:5120',
-            'archivos_adjuntos' => 'nullable|array',
-            'archivos_adjuntos.*' => 'file|max:10240',
             'firmante' => 'nullable|string|max:255',
             'cargo_firmante' => 'nullable|string|max:255',
             'fecha_vigencia' => 'nullable|date',
@@ -49,20 +42,19 @@ class ComunicadoController extends Controller
             'is_featured' => 'boolean',
         ]);
 
+        // Auto-generar extracto desde contenido si no viene
+        if (empty($validated['extracto'])) {
+            $validated['extracto'] = mb_substr(strip_tags($validated['contenido']), 0, 500);
+        }
+
         if ($request->hasFile('imagen')) {
             $validated['imagen'] = $request->file('imagen')
                 ->store(config('pandilla.uploads.paths.images'), 'public');
         }
 
-        if ($request->hasFile('archivos_adjuntos')) {
-            $adjuntos = [];
-            foreach ($request->file('archivos_adjuntos') as $file) {
-                $adjuntos[] = [
-                    'nombre' => $file->getClientOriginalName(),
-                    'ruta' => $file->store(config('pandilla.uploads.paths.documents'), 'public'),
-                ];
-            }
-            $validated['archivos_adjuntos'] = $adjuntos;
+        // Solo 1 destacado a la vez
+        if (!empty($validated['is_featured'])) {
+            Comunicado::where('is_featured', true)->update(['is_featured' => false]);
         }
 
         Comunicado::create($validated);
@@ -70,22 +62,6 @@ class ComunicadoController extends Controller
         return redirect()->route('admin.comunicados.index')
             ->with('success', 'Comunicado creado correctamente');
     }
-
-    public function show(Comunicado $comunicado): Response
-    {
-        return Inertia::render('Admin/Comunicados/Show', [
-            'item' => $comunicado,
-        ]);
-    }
-
-    public function edit(Comunicado $comunicado): Response
-    {
-        return Inertia::render('Admin/Comunicados/Edit', [
-            'item' => $comunicado,
-            'tipos' => config('pandilla.tipos_comunicado'),
-        ]);
-    }
-
     public function update(Request $request, Comunicado $comunicado)
     {
         $validated = $request->validate([
@@ -93,11 +69,9 @@ class ComunicadoController extends Controller
             'tipo' => 'required|string',
             'numero' => 'nullable|string|max:50',
             'fecha' => 'required|date',
-            'extracto' => 'required|string|max:500',
+            'extracto' => 'nullable|string|max:500',
             'contenido' => 'required|string',
             'imagen' => 'nullable|image|max:5120',
-            'archivos_adjuntos' => 'nullable|array',
-            'archivos_adjuntos.*' => 'file|max:10240',
             'firmante' => 'nullable|string|max:255',
             'cargo_firmante' => 'nullable|string|max:255',
             'fecha_vigencia' => 'nullable|date',
@@ -105,6 +79,11 @@ class ComunicadoController extends Controller
             'is_published' => 'boolean',
             'is_featured' => 'boolean',
         ]);
+
+        // Auto-generar extracto desde contenido si no viene
+        if (empty($validated['extracto'])) {
+            $validated['extracto'] = mb_substr(strip_tags($validated['contenido']), 0, 500);
+        }
 
         if ($request->hasFile('imagen')) {
             if ($comunicado->imagen) {
@@ -114,20 +93,11 @@ class ComunicadoController extends Controller
                 ->store(config('pandilla.uploads.paths.images'), 'public');
         }
 
-        if ($request->hasFile('archivos_adjuntos')) {
-            if ($comunicado->archivos_adjuntos) {
-                foreach ($comunicado->archivos_adjuntos as $adjunto) {
-                    Storage::disk('public')->delete($adjunto['ruta']);
-                }
-            }
-            $adjuntos = [];
-            foreach ($request->file('archivos_adjuntos') as $file) {
-                $adjuntos[] = [
-                    'nombre' => $file->getClientOriginalName(),
-                    'ruta' => $file->store(config('pandilla.uploads.paths.documents'), 'public'),
-                ];
-            }
-            $validated['archivos_adjuntos'] = $adjuntos;
+        // Solo 1 destacado a la vez
+        if (!empty($validated['is_featured'])) {
+            Comunicado::where('is_featured', true)
+                ->where('id', '!=', $comunicado->id)
+                ->update(['is_featured' => false]);
         }
 
         $comunicado->update($validated);

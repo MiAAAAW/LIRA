@@ -33,7 +33,7 @@ class DirectUploadController extends Controller
         $maxGlobalSize = config('pandilla.direct_upload.videos.max_size', 5 * 1024 * 1024 * 1024);
 
         $validated = $request->validate([
-            'type' => 'required|in:videos,audios,thumbnails,documents',
+            'type' => 'required|in:videos,audios,thumbnails,documents,documents/distinciones,documents/publicaciones',
             'filename' => 'required|string|max:255',
             'contentType' => 'required|string|max:100',
             'fileSize' => "required|integer|min:1|max:{$maxGlobalSize}",
@@ -132,11 +132,20 @@ class DirectUploadController extends Controller
     }
 
     /**
+     * Obtener tipo base para config (documents/distinciones -> documents)
+     */
+    protected function getBaseType(string $type): string
+    {
+        return explode('/', $type)[0];
+    }
+
+    /**
      * Obtener tipos de contenido permitidos según tipo de media (desde config)
      */
     protected function getAllowedContentTypes(string $type): array
     {
-        return config("pandilla.direct_upload.{$type}.mime_types", []);
+        $baseType = $this->getBaseType($type);
+        return config("pandilla.direct_upload.{$baseType}.mime_types", []);
     }
 
     /**
@@ -144,7 +153,8 @@ class DirectUploadController extends Controller
      */
     protected function getMaxFileSize(string $type): int
     {
-        return config("pandilla.direct_upload.{$type}.max_size", 100 * 1024 * 1024);
+        $baseType = $this->getBaseType($type);
+        return config("pandilla.direct_upload.{$baseType}.max_size", 100 * 1024 * 1024);
     }
 
     /**

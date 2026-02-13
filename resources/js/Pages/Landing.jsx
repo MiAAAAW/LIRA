@@ -44,6 +44,8 @@ export default function Landing({
   publicaciones = [],
   comunicados = [],
   distinciones = [],
+  // Anuncio
+  comunicadoDestacado = null,
 }) {
   // Config para UI strings y secciones fijas
   const config = landingConfig;
@@ -71,23 +73,33 @@ export default function Landing({
           {/* Hero Section - con video de fondo desde CDN */}
           <Hero config={heroConfig} />
 
-          {/* 2-Column Layout: All 10 modules */}
-          <ContentColumns
-            // Institutional Column
-            ley24325={ley24325}
-            baseLegal={baseLegal}
-            indecopi={indecopi}
-            estandartes={estandartes}
-            presidentes={presidentes}
-            // Content Column
-            videos={videos}
-            audios={audios}
-            distinciones={distinciones}
-            publicaciones={publicaciones}
-            comunicados={comunicados}
-            // Config
-            config={config}
-          />
+          {/* 2-Column Layout: All 10 modules — con background image del CDN */}
+          <div
+            className="relative bg-cover bg-center bg-fixed"
+            style={cdnUrl ? { backgroundImage: `url(${cdnUrl}/landing/background.jpeg)` } : undefined}
+          >
+            <div className="absolute inset-0 bg-background/85 backdrop-blur-[2px]" />
+            <div className="relative">
+              <ContentColumns
+                // Institutional Column
+                ley24325={ley24325}
+                baseLegal={baseLegal}
+                indecopi={indecopi}
+                estandartes={estandartes}
+                presidentes={presidentes}
+                // Content Column
+                videos={videos}
+                audios={audios}
+                distinciones={distinciones}
+                publicaciones={publicaciones}
+                comunicados={comunicados}
+                // Anuncio
+                comunicadoDestacado={comunicadoDestacado}
+                // Config
+                config={config}
+              />
+            </div>
+          </div>
         </main>
 
         {/* Footer */}

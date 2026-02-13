@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\SiteSetting;
 use App\Models\Video;
 use App\Services\CloudflareMediaService;
 use Illuminate\Http\Request;
@@ -20,16 +21,7 @@ class VideoController extends Controller
 
         return Inertia::render('Admin/Videos/Index', [
             'items' => $items,
-            'categorias' => config('pandilla.categorias_video'),
-            'fuentes' => config('pandilla.fuentes_media'),
-        ]);
-    }
-
-    public function create(): Response
-    {
-        return Inertia::render('Admin/Videos/Create', [
-            'categorias' => config('pandilla.categorias_video'),
-            'fuentes' => config('pandilla.fuentes_media'),
+            'sectionVisible' => SiteSetting::isSectionVisible('videos'),
         ]);
     }
 
@@ -110,22 +102,6 @@ class VideoController extends Controller
 
         return redirect()->route('admin.videos.index')
             ->with('success', 'Video creado correctamente');
-    }
-
-    public function show(Video $video): Response
-    {
-        return Inertia::render('Admin/Videos/Show', [
-            'item' => $video,
-        ]);
-    }
-
-    public function edit(Video $video): Response
-    {
-        return Inertia::render('Admin/Videos/Edit', [
-            'item' => $video,
-            'categorias' => config('pandilla.categorias_video'),
-            'fuentes' => config('pandilla.fuentes_media'),
-        ]);
     }
 
     public function update(Request $request, Video $video, CloudflareMediaService $cloudflareService)

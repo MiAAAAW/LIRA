@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { cn, storageUrl } from '@/lib/utils';
 import { Button } from '@/Components/ui/button';
 import DynamicIcon from '@/Components/DynamicIcon';
@@ -27,6 +27,15 @@ export default function FileUpload({
   const [dragActive, setDragActive] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(null);
   const inputRef = useRef(null);
+
+  // Cleanup blob URLs para evitar memory leaks
+  useEffect(() => {
+    return () => {
+      if (previewUrl && previewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
 
   // Detect if this is a video upload based on accept attribute
   const isVideoUpload = accept?.includes('video');
@@ -233,6 +242,11 @@ export function ImageGalleryUpload({
   };
 
   const handleRemove = (index) => {
+    const item = value[index];
+    // Revocar blob URL si es un File
+    if (item instanceof File) {
+      URL.revokeObjectURL(URL.createObjectURL(item));
+    }
     const newValue = [...value];
     newValue.splice(index, 1);
     onChange(name, newValue);

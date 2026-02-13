@@ -63,6 +63,7 @@ Route::prefix('admin')
 
         // Settings
         Route::get('/settings', [SettingsController::class, 'index'])->name('settings');
+        Route::post('/settings/toggle-section', [SettingsController::class, 'toggleSection'])->name('settings.toggle-section');
 
         // Direct Upload API (para subir archivos grandes a R2)
         Route::post('/upload/presigned', [DirectUploadController::class, 'getPresignedUrl'])->name('upload.presigned');
@@ -73,14 +74,14 @@ Route::prefix('admin')
         Route::resource('base-legal', BaseLegalController::class)->only(['index', 'store', 'update', 'destroy'])->parameters(['base-legal' => 'baseLegal']);
         Route::resource('indecopi', RegistroIndecopiController::class)->only(['index', 'store', 'update', 'destroy']);
         Route::resource('estandartes', EstandarteController::class)->only(['index', 'store', 'update', 'destroy']);
-        Route::resource('presidentes', PresidenteController::class);
+        Route::resource('presidentes', PresidenteController::class)->only(['index', 'store', 'update', 'destroy']);
 
-        // Grupo 2: Multimedia y Comunicación
-        Route::resource('videos', VideoController::class);
-        Route::resource('audios', AudioController::class);
-        Route::resource('distinciones', DistincionController::class)->only(['index', 'store', 'update', 'destroy']);
-        Route::resource('publicaciones', PublicacionController::class);
-        Route::resource('comunicados', ComunicadoController::class);
+        // Grupo 2: Multimedia y Comunicación (modal-based: sin create/edit pages)
+        Route::resource('videos', VideoController::class)->only(['index', 'store', 'update', 'destroy']);
+        Route::resource('audios', AudioController::class)->only(['index', 'store', 'update', 'destroy']);
+        Route::resource('distinciones', DistincionController::class)->only(['index', 'store', 'update', 'destroy'])->parameters(['distinciones' => 'distincion']);
+        Route::resource('publicaciones', PublicacionController::class)->only(['index', 'store', 'update', 'destroy'])->parameters(['publicaciones' => 'publicacion']);
+        Route::resource('comunicados', ComunicadoController::class)->only(['index', 'store', 'update', 'destroy']);
 
         // Acciones adicionales
         Route::post('ley24325/{ley24325}/toggle-publish', [Ley24325Controller::class, 'togglePublish'])->name('ley24325.toggle-publish');

@@ -2,7 +2,7 @@ import { Head } from '@inertiajs/react';
 import AdminLayout from '@/Layouts/AdminLayout';
 import DataTable from '@/Components/admin/DataTable';
 
-export default function Index({ items, tipos }) {
+export default function Index({ items, tipos, sectionVisible }) {
   const tipoOptions = Object.entries(tipos || {}).map(([value, label]) => ({ value, label }));
 
   const columns = [
@@ -47,7 +47,8 @@ export default function Index({ items, tipos }) {
       label: 'Tipo',
       type: 'select',
       options: tipoOptions,
-      required: true
+      required: true,
+      defaultValue: 'reconocimiento',
     },
     {
       name: 'otorgante',
@@ -62,10 +63,19 @@ export default function Index({ items, tipos }) {
       required: true
     },
     {
+      name: 'descripcion',
+      label: 'Descripcion',
+      type: 'textarea',
+      rows: 2,
+      fullWidth: true,
+      required: true,
+      placeholder: 'Breve descripcion del reconocimiento...'
+    },
+    {
       name: 'documento_pdf',
       label: 'Documento PDF',
       type: 'direct-upload',
-      uploadType: 'documents',
+      uploadType: 'documents/distinciones',
       required: true,
       fullWidth: true,
       helpText: 'Certificado o resolucion en PDF. Maximo 50MB.',
@@ -83,6 +93,7 @@ export default function Index({ items, tipos }) {
       <Head title="Distinciones - Admin" />
       <DataTable
         title="Premios y Reconocimientos"
+        sectionToggle={{ sectionKey: 'distinciones', isVisible: sectionVisible }}
         data={items.data}
         columns={columns}
         createLabel="Agregar distincion"

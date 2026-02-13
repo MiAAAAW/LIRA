@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\RegistroIndecopi;
+use App\Models\SiteSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -20,6 +21,7 @@ class RegistroIndecopiController extends Controller
         return Inertia::render('Admin/Indecopi/Index', [
             'items' => $items,
             'tiposRegistro' => config('pandilla.tipos_registro_indecopi'),
+            'sectionVisible' => SiteSetting::isSectionVisible('indecopi'),
         ]);
     }
 

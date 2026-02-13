@@ -29,10 +29,14 @@ class Publicacion extends Model
         'documento_pdf',
         'enlace_compra',
         'enlace_descarga',
+        'enlace_externo',
         'precio',
         'orden',
         'is_published',
         'is_featured',
+        // CDN fields for PDF
+        'r2_pdf_key',
+        'r2_pdf_url',
     ];
 
     protected $casts = [
@@ -46,14 +50,16 @@ class Publicacion extends Model
         'image_url',
         'thumbnail_url',
         'webp_url',
+        'pdf_url',
     ];
 
     public const TIPOS = [
         'libro' => 'Libro',
         'revista' => 'Revista',
-        'articulo' => 'Artículo',
-        'investigacion' => 'Investigación',
+        'articulo' => 'Articulo',
+        'investigacion' => 'Investigacion',
         'tesis' => 'Tesis',
+        'otro' => 'Otro',
     ];
 
     /**
@@ -62,6 +68,23 @@ class Publicacion extends Model
     public function esGratuito(): bool
     {
         return is_null($this->precio) || $this->precio == 0;
+    }
+
+    /**
+     * URL del PDF (prioriza CDN sobre local)
+     */
+    public function getPdfUrlAttribute(): ?string
+    {
+        // Prioridad: CDN > local
+        if ($this->r2_pdf_url) {
+            return $this->r2_pdf_url;
+        }
+
+        if ($this->documento_pdf) {
+            return asset('storage/' . $this->documento_pdf);
+        }
+
+        return null;
     }
 
     /**

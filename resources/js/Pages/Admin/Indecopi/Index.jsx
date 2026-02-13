@@ -2,7 +2,7 @@ import { Head } from '@inertiajs/react';
 import AdminLayout from '@/Layouts/AdminLayout';
 import DataTable from '@/Components/admin/DataTable';
 
-export default function Index({ items, tiposRegistro }) {
+export default function Index({ items, tiposRegistro, sectionVisible }) {
   const columns = [
     { key: 'titulo', label: 'Titulo' },
     { key: 'tipo_registro', label: 'Tipo' },
@@ -65,6 +65,7 @@ export default function Index({ items, tiposRegistro }) {
       <Head title="INDECOPI - Admin" />
       <DataTable
         title="Registros INDECOPI"
+        sectionToggle={{ sectionKey: 'indecopi', isVisible: sectionVisible }}
         data={items.data}
         columns={columns}
         createLabel="Agregar registro"

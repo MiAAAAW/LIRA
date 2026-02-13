@@ -113,25 +113,25 @@ export default function Dashboard({ stats, recentActivity }) {
             <CardContent>
               <div className="grid gap-3 sm:grid-cols-2">
                 <QuickActionButton
-                  href="/admin/comunicados/create"
+                  href="/admin/comunicados"
                   icon="Megaphone"
                   label="Nuevo Comunicado"
                   color="pink"
                 />
                 <QuickActionButton
-                  href="/admin/videos/create"
+                  href="/admin/videos"
                   icon="Video"
                   label="Agregar Video"
                   color="red"
                 />
                 <QuickActionButton
-                  href="/admin/audios/create"
+                  href="/admin/audios"
                   icon="Music"
                   label="Agregar Audio"
                   color="orange"
                 />
                 <QuickActionButton
-                  href="/admin/distinciones/create"
+                  href="/admin/distinciones"
                   icon="Award"
                   label="Nueva Distinción"
                   color="yellow"
@@ -143,7 +143,7 @@ export default function Dashboard({ stats, recentActivity }) {
                   color="violet"
                 />
                 <QuickActionButton
-                  href="/admin/publicaciones/create"
+                  href="/admin/publicaciones"
                   icon="Newspaper"
                   label="Nueva Publicación"
                   color="indigo"

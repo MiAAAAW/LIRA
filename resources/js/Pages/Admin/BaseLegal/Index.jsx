@@ -2,7 +2,7 @@ import { Head } from '@inertiajs/react';
 import AdminLayout from '@/Layouts/AdminLayout';
 import DataTable from '@/Components/admin/DataTable';
 
-export default function Index({ items, tiposDocumento }) {
+export default function Index({ items, tiposDocumento, sectionVisible }) {
   const columns = [
     { key: 'titulo', label: 'Título' },
     { key: 'tipo_documento', label: 'Tipo' },
@@ -37,6 +37,7 @@ export default function Index({ items, tiposDocumento }) {
       type: 'select',
       options: tipoOptions,
       required: true,
+      defaultValue: 'resolucion',
     },
     {
       name: 'numero_documento',
@@ -69,6 +70,7 @@ export default function Index({ items, tiposDocumento }) {
       <Head title="Base Legal - Admin" />
       <DataTable
         title="Documentos Legales"
+        sectionToggle={{ sectionKey: 'base_legal', isVisible: sectionVisible }}
         data={items.data}
         columns={columns}
         createLabel="Agregar documento"

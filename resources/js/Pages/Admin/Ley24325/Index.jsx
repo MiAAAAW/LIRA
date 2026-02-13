@@ -2,7 +2,7 @@ import { Head } from '@inertiajs/react';
 import AdminLayout from '@/Layouts/AdminLayout';
 import DataTable from '@/Components/admin/DataTable';
 
-export default function Index({ items }) {
+export default function Index({ items, sectionVisible }) {
   const columns = [
     {
       key: 'titulo',
@@ -64,6 +64,7 @@ export default function Index({ items }) {
 
       <DataTable
         title="Gestión Ley 24325"
+        sectionToggle={{ sectionKey: 'ley24325', isVisible: sectionVisible }}
         data={items.data}
         columns={columns}
         createLabel="Agregar registro"

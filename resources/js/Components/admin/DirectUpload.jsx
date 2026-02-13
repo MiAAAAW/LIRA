@@ -24,6 +24,7 @@ export default function DirectUpload({
   helpText,
   error,
   onChange,
+  onUploadingChange, // callback(bool) - notifica al padre si hay un upload en curso
   value,
   className,
   existingFile = null, // { url, key, name } - archivo ya existente (para edición)
@@ -43,7 +44,7 @@ export default function DirectUpload({
     setUploadedFile(value || null);
     setUploadError(null);
     setProgress(0);
-  }, [existingFile?.url, existingFile?.key]);
+  }, [existingFile?.url, existingFile?.key, value]);
 
   // Si hay archivo existente y no hemos subido uno nuevo, mostrarlo
   const hasExistingFile = existingFile?.url && keepExisting && !uploadedFile;
@@ -74,9 +75,17 @@ export default function DirectUpload({
       icon: 'FileText',
       label: 'documento PDF',
     },
+    'documents/distinciones': {
+      accept: accept || 'application/pdf',
+      maxSize: maxSize || 50 * 1024 * 1024, // 50MB
+      icon: 'FileText',
+      label: 'documento PDF',
+    },
   };
 
-  const currentConfig = config[type] || config.videos;
+  // Tipo base para matching: 'documents/publicaciones' → 'documents'
+  const baseType = type.includes('/') ? type.split('/')[0] : type;
+  const currentConfig = config[type] || config[baseType] || config.videos;
 
   const formatFileSize = (bytes) => {
     if (bytes === 0) return '0 B';
@@ -90,6 +99,7 @@ export default function DirectUpload({
     setUploadError(null);
     setUploading(true);
     setProgress(0);
+    onUploadingChange?.(true);
 
     try {
       // 1. Obtener URL firmada del servidor
@@ -185,6 +195,7 @@ export default function DirectUpload({
       setProgress(0);
     } finally {
       setUploading(false);
+      onUploadingChange?.(false);
       abortControllerRef.current = null;
     }
   };
@@ -298,11 +309,15 @@ export default function DirectUpload({
               <div className="flex items-center justify-center gap-3">
                 <DynamicIcon name="Loader2" className="h-8 w-8 text-primary animate-spin" />
                 <div className="text-left">
-                  <p className="font-medium">Subiendo al CDN...</p>
-                  <p className="text-sm text-gray-500">{progress}% completado</p>
+                  <p className="font-medium">
+                    {progress >= 100 ? 'Confirmando subida...' : 'Subiendo al CDN...'}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    {progress >= 100 ? 'Verificando con el servidor' : `${progress}% completado`}
+                  </p>
                 </div>
               </div>
-              <Progress value={progress} className="h-3" />
+              <Progress value={progress >= 100 ? 100 : progress} className="h-3" />
               <Button
                 type="button"
                 variant="outline"
@@ -347,21 +362,21 @@ export default function DirectUpload({
             <div className="space-y-3">
               {/* Preview del video/audio/imagen/documento existente */}
               <div className="relative mx-auto max-w-[280px] rounded-lg overflow-hidden bg-muted">
-                {type === 'videos' ? (
+                {baseType === 'videos' ? (
                   <video
                     src={existingFile.url}
                     className="w-full aspect-video object-cover"
                     controls
                     preload="metadata"
                   />
-                ) : type === 'audios' ? (
+                ) : baseType === 'audios' ? (
                   <div className="p-4 flex items-center gap-3">
                     <div className="p-2 bg-primary/10 rounded-full">
                       <DynamicIcon name="Music" className="h-6 w-6 text-primary" />
                     </div>
                     <audio src={existingFile.url} controls className="flex-1" preload="metadata" />
                   </div>
-                ) : type === 'documents' ? (
+                ) : baseType === 'documents' ? (
                   <div className="p-4 flex flex-col items-center gap-3">
                     <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-full">
                       <DynamicIcon name="FileText" className="h-8 w-8 text-red-600" />

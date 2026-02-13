@@ -2,9 +2,7 @@ import { Head } from '@inertiajs/react';
 import AdminLayout from '@/Layouts/AdminLayout';
 import DataTable from '@/Components/admin/DataTable';
 
-export default function Index({ items, fuentes }) {
-  const fuenteOptions = Object.entries(fuentes || {}).map(([value, label]) => ({ value, label }));
-
+export default function Index({ items, sectionVisible }) {
   const columns = [
     {
       key: 'preview',
@@ -80,6 +78,7 @@ export default function Index({ items, fuentes }) {
       <Head title="Videos - Admin" />
       <DataTable
         title="Galería de Videos"
+        sectionToggle={{ sectionKey: 'videos', isVisible: sectionVisible }}
         data={items.data}
         columns={columns}
         createLabel="Subir video"

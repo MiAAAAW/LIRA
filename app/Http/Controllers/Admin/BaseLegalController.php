@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\BaseLegal;
+use App\Models\SiteSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -20,6 +21,7 @@ class BaseLegalController extends Controller
         return Inertia::render('Admin/BaseLegal/Index', [
             'items' => $items,
             'tiposDocumento' => config('pandilla.tipos_documento_legal'),
+            'sectionVisible' => SiteSetting::isSectionVisible('base_legal'),
         ]);
     }
 

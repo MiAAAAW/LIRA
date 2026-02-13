@@ -29,6 +29,8 @@ class CloudflareMediaService
     public const TYPE_AUDIO = 'audios';
     public const TYPE_THUMBNAIL = 'thumbnails';
     public const TYPE_DOCUMENT = 'documents';
+    public const TYPE_DISTINCION = 'documents/distinciones';
+    public const TYPE_PUBLICACION = 'documents/publicaciones';
 
     /**
      * Verificar si el servicio está configurado
@@ -197,7 +199,7 @@ class CloudflareMediaService
      */
     protected function validateType(string $type): void
     {
-        $validTypes = [self::TYPE_VIDEO, self::TYPE_AUDIO, self::TYPE_THUMBNAIL, self::TYPE_DOCUMENT];
+        $validTypes = [self::TYPE_VIDEO, self::TYPE_AUDIO, self::TYPE_THUMBNAIL, self::TYPE_DOCUMENT, self::TYPE_DISTINCION, self::TYPE_PUBLICACION];
 
         if (!in_array($type, $validTypes)) {
             throw new \InvalidArgumentException(

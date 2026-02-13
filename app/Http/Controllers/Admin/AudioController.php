@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Audio;
+use App\Models\SiteSetting;
 use App\Services\CloudflareMediaService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -21,15 +22,7 @@ class AudioController extends Controller
         return Inertia::render('Admin/Audios/Index', [
             'items' => $items,
             'tipos' => config('pandilla.tipos_audio'),
-            'fuentes' => config('pandilla.fuentes_media'),
-        ]);
-    }
-
-    public function create(): Response
-    {
-        return Inertia::render('Admin/Audios/Create', [
-            'tipos' => config('pandilla.tipos_audio'),
-            'fuentes' => config('pandilla.fuentes_media'),
+            'sectionVisible' => SiteSetting::isSectionVisible('audios'),
         ]);
     }
 
@@ -112,22 +105,6 @@ class AudioController extends Controller
 
         return redirect()->route('admin.audios.index')
             ->with('success', 'Audio creado correctamente');
-    }
-
-    public function show(Audio $audio): Response
-    {
-        return Inertia::render('Admin/Audios/Show', [
-            'item' => $audio,
-        ]);
-    }
-
-    public function edit(Audio $audio): Response
-    {
-        return Inertia::render('Admin/Audios/Edit', [
-            'item' => $audio,
-            'tipos' => config('pandilla.tipos_audio'),
-            'fuentes' => config('pandilla.fuentes_media'),
-        ]);
     }
 
     public function update(Request $request, Audio $audio, CloudflareMediaService $r2Service)

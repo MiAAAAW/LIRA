@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Ley24325;
+use App\Models\SiteSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -19,6 +20,7 @@ class Ley24325Controller extends Controller
 
         return Inertia::render('Admin/Ley24325/Index', [
             'items' => $items,
+            'sectionVisible' => SiteSetting::isSectionVisible('ley24325'),
         ]);
     }
 

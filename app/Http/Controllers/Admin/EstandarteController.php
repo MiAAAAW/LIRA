@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Estandarte;
+use App\Models\SiteSetting;
 use App\Services\ImageProcessingService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -23,6 +24,7 @@ class EstandarteController extends Controller
 
         return Inertia::render('Admin/Estandartes/Index', [
             'items' => $items,
+            'sectionVisible' => SiteSetting::isSectionVisible('estandartes'),
         ]);
     }
 

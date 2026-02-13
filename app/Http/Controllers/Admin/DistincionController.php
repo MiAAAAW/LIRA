@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Distincion;
+use App\Models\SiteSetting;
 use App\Services\CloudflareMediaService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -23,6 +24,7 @@ class DistincionController extends Controller
         return Inertia::render('Admin/Distinciones/Index', [
             'items' => $items,
             'tipos' => config('pandilla.tipos_distincion'),
+            'sectionVisible' => SiteSetting::isSectionVisible('distinciones'),
         ]);
     }
 
@@ -33,6 +35,7 @@ class DistincionController extends Controller
             'tipo' => 'required|string|in:' . implode(',', array_keys(config('pandilla.tipos_distincion'))),
             'otorgante' => 'required|string|max:255',
             'fecha_otorgamiento' => 'required|date',
+            'descripcion' => 'required|string',
             // PDF via direct upload (obligatorio)
             'r2_pdf_key' => 'required|string|max:500',
             'r2_pdf_url' => 'required|url|max:500',
@@ -57,6 +60,7 @@ class DistincionController extends Controller
             'tipo' => 'required|string|in:' . implode(',', array_keys(config('pandilla.tipos_distincion'))),
             'otorgante' => 'required|string|max:255',
             'fecha_otorgamiento' => 'required|date',
+            'descripcion' => 'required|string',
             // PDF opcional en update (mantiene el existente si no se envía nuevo)
             'r2_pdf_key' => 'nullable|string|max:500',
             'r2_pdf_url' => 'nullable|url|max:500',

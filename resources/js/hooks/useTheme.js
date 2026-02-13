@@ -28,8 +28,8 @@ const getSystemTheme = () => {
  * }}
  */
 export function useTheme() {
-  const [theme, setThemeState] = useState('system');
-  const [resolvedTheme, setResolvedTheme] = useState('light');
+  const [theme, setThemeState] = useState('dark');
+  const [resolvedTheme, setResolvedTheme] = useState('dark');
   const [mounted, setMounted] = useState(false);
 
   /**
@@ -64,7 +64,7 @@ export function useTheme() {
     const stored = localStorage.getItem('pandilla-theme');
     const initialTheme = (stored === 'dark' || stored === 'light' || stored === 'system')
       ? stored
-      : 'system';
+      : 'dark';
 
     setThemeState(initialTheme);
     resolveAndApply(initialTheme);

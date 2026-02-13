@@ -2,7 +2,7 @@ import { Head } from '@inertiajs/react';
 import AdminLayout from '@/Layouts/AdminLayout';
 import DataTable from '@/Components/admin/DataTable';
 
-export default function Index({ items }) {
+export default function Index({ items, sectionVisible }) {
   const columns = [
     { key: 'imagen_principal', label: 'Imagen', type: 'image' },
     { key: 'titulo', label: 'Título' },
@@ -43,6 +43,7 @@ export default function Index({ items }) {
       <Head title="Estandartes - Admin" />
       <DataTable
         title="Estandartes del Conjunto"
+        sectionToggle={{ sectionKey: 'estandartes', isVisible: sectionVisible }}
         data={items.data}
         columns={columns}
         formFields={formFields}

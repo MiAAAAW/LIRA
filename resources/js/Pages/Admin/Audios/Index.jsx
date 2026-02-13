@@ -2,12 +2,10 @@ import { Head } from '@inertiajs/react';
 import AdminLayout from '@/Layouts/AdminLayout';
 import DataTable from '@/Components/admin/DataTable';
 
-export default function Index({ items, tipos, fuentes }) {
+export default function Index({ items, tipos, sectionVisible }) {
   const tipoOptions = Object.entries(tipos || {}).map(([value, label]) => ({ value, label }));
-  const fuenteOptions = Object.entries(fuentes || {}).map(([value, label]) => ({ value, label }));
 
   const columns = [
-    { key: 'thumbnail', label: 'Img', type: 'image' },
     { key: 'titulo', label: 'Título' },
     {
       key: 'tipo',
@@ -24,7 +22,7 @@ export default function Index({ items, tipos, fuentes }) {
   // Simplified form fields - upload directo a CDN con progress bar
   const formFields = [
     { name: 'titulo', label: 'Título', required: true, fullWidth: true },
-    { name: 'tipo', label: 'Tipo de música', type: 'select', options: tipoOptions, required: true },
+    { name: 'tipo', label: 'Tipo de música', type: 'select', options: tipoOptions, required: true, defaultValue: 'pandilla' },
     {
       name: 'audio_file',
       label: 'Archivo de audio',
@@ -45,6 +43,7 @@ export default function Index({ items, tipos, fuentes }) {
       <Head title="Audios - Admin" />
       <DataTable
         title="Música Tradicional"
+        sectionToggle={{ sectionKey: 'audios', isVisible: sectionVisible }}
         data={items.data}
         columns={columns}
         createLabel="Subir audio"

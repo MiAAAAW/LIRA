@@ -11,6 +11,7 @@ use App\Models\Ley24325;
 use App\Models\Presidente;
 use App\Models\Publicacion;
 use App\Models\RegistroIndecopi;
+use App\Models\SiteSetting;
 use App\Models\Video;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -25,34 +26,38 @@ class LandingController extends Controller
         // URL base del CDN (Cloudflare R2)
         $cdnUrl = rtrim(config('filesystems.disks.r2.url', ''), '/');
 
+        // Section visibility (1 cached query)
+        $vis = SiteSetting::getSectionVisibility();
+
         return Inertia::render('Landing', [
             // CDN URL para assets estáticos del landing
             'cdnUrl' => $cdnUrl,
             // ==========================================
             // MARCO LEGAL
             // ==========================================
-            'ley24325' => Ley24325::published()->orderBy('orden')->get(),
-            'baseLegal' => BaseLegal::published()->orderBy('orden')->get(),
-            'indecopi' => RegistroIndecopi::published()->orderBy('orden')->get(),
+            'ley24325' => $vis['ley24325'] ? Ley24325::published()->orderBy('orden')->get() : [],
+            'baseLegal' => $vis['base_legal'] ? BaseLegal::published()->orderBy('orden')->get() : [],
+            'indecopi' => $vis['indecopi'] ? RegistroIndecopi::published()->orderBy('orden')->get() : [],
 
             // ==========================================
             // HISTORIA
             // ==========================================
-            'estandartes' => Estandarte::published()->orderBy('orden')->get(),
-            'presidentes' => $this->getTeam(),
+            'estandartes' => $vis['estandartes'] ? Estandarte::published()->orderBy('orden')->get() : [],
+            'presidentes' => $vis['presidentes'] ? $this->getTeam() : [],
 
             // ==========================================
             // MULTIMEDIA
             // ==========================================
-            'videos' => Video::published()->orderBy('orden')->get(),
-            'audios' => Audio::published()->orderBy('orden')->get(),
+            'videos' => $vis['videos'] ? Video::published()->orderBy('orden')->get() : [],
+            'audios' => $vis['audios'] ? Audio::published()->orderBy('orden')->get() : [],
 
             // ==========================================
             // COMUNICACIONES
             // ==========================================
-            'publicaciones' => Publicacion::published()->orderBy('orden')->get(),
-            'comunicados' => Comunicado::published()->latest('fecha')->get(),
-            'distinciones' => Distincion::published()->orderBy('orden')->get(),
+            'publicaciones' => $vis['publicaciones'] ? Publicacion::published()->orderBy('orden')->get() : [],
+            'comunicados' => $vis['comunicados'] ? Comunicado::published()->latest('fecha')->get() : [],
+            'comunicadoDestacado' => Comunicado::published()->featured()->vigentes()->latest('fecha')->first(),
+            'distinciones' => $vis['distinciones'] ? Distincion::published()->orderBy('orden')->get() : [],
         ]);
     }
 

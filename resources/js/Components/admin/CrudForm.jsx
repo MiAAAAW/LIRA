@@ -26,8 +26,8 @@ export default function CrudForm({
     }
     return acc;
   }, {
-    // Always include publish options with proper defaults
-    is_published: item?.is_published ?? false,
+    // Always include publish options with proper defaults (true = publicar por defecto)
+    is_published: item?.is_published ?? true,
     is_featured: item?.is_featured ?? false,
     orden: item?.orden ?? 0,
   });

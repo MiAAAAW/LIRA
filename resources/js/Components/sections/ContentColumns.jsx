@@ -62,6 +62,7 @@ const DRAG_ACTIVATION_DISTANCE = 8; // px mínimo para activar drag
 const DRAG_Z_INDEX = 50;
 const DRAG_OPACITY = 0.8;
 const DRAG_SCALE = 1.02;
+const PANEL_MAX_HEIGHT = 600; // px - altura máxima para paneles con scroll
 
 // i18n strings (extraer a archivo de traducciones si necesario)
 const STRINGS = {
@@ -300,9 +301,6 @@ const DocumentViewer = React.memo(function DocumentViewer({ documents, icon: Ico
   );
 });
 
-// Alias para compatibilidad (DocumentGrid usado en DocumentList)
-const DocumentGrid = DocumentViewer;
-
 // ═══════════════════════════════════════════════════════════════════════════════
 // MEDIA CONTEXT - Coordina que solo 1 media (video O audio) se reproduzca a la vez
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -342,9 +340,7 @@ const MediaProvider = ({ children }) => {
 
 const useMediaContext = () => React.useContext(MediaContext);
 
-// Aliases for backward compatibility - videos pause when ANY media is active
-const VideoContext = MediaContext;
-const VideoProvider = MediaProvider;
+// Hook para videos - pausa cuando ANY media está activo
 const useVideoContext = () => {
   const ctx = useMediaContext();
   const videoId = ctx.activeMediaType === 'video' ? ctx.activeMediaId : null;
@@ -561,6 +557,7 @@ const VideoCard = React.memo(function VideoCard({ video, onOpenFullscreen }) {
   const [isVisible, setIsVisible] = React.useState(false);
   const [isVideoReady, setIsVideoReady] = React.useState(false);
   const [isBuffering, setIsBuffering] = React.useState(false);
+  const [userPaused, setUserPaused] = React.useState(false);
   const videoRef = React.useRef(null);
   const cardRef = React.useRef(null);
 
@@ -609,16 +606,20 @@ const VideoCard = React.memo(function VideoCard({ video, onOpenFullscreen }) {
           const visible = entry.isIntersecting && entry.intersectionRatio > 0.6;
           setIsVisible(visible);
 
-          // NO auto-reproducir si hay un audio activo o modal abierto
-          if (visible && !modalOpen && !isAudioPlaying) {
-            // Video visible y no hay modal ni audio - reproducir
+          // NO auto-reproducir si hay un audio activo, modal abierto, o usuario pausó
+          if (visible && !modalOpen && !isAudioPlaying && !userPaused) {
+            // Video visible y no hay modal ni audio ni pausa manual - reproducir
             if (videoRef.current && !isPlaying) {
               setActiveVideo(video.id);
-              videoRef.current.play().catch(() => {});
-              setIsPlaying(true);
+              videoRef.current.play()
+                .then(() => setIsPlaying(true))
+                .catch(() => {
+                  // Play falló (ej: autoplay bloqueado) - revertir estado
+                  setActiveVideo(null);
+                });
             }
           } else if (!visible) {
-            // Video no visible - pausar
+            // Video no visible - pausar y resetear pausa manual
             if (videoRef.current && isPlaying) {
               videoRef.current.pause();
               setIsPlaying(false);
@@ -626,6 +627,7 @@ const VideoCard = React.memo(function VideoCard({ video, onOpenFullscreen }) {
                 setActiveVideo(null);
               }
             }
+            setUserPaused(false);
           }
         });
       },
@@ -634,7 +636,7 @@ const VideoCard = React.memo(function VideoCard({ video, onOpenFullscreen }) {
 
     observer.observe(cardRef.current);
     return () => observer.disconnect();
-  }, [canPlayInline, isPlaying, modalOpen, video.id, setActiveVideo, isThisActive, isAudioPlaying]);
+  }, [canPlayInline, isPlaying, modalOpen, video.id, setActiveVideo, isThisActive, isAudioPlaying, userPaused]);
 
   // Toggle mute
   const toggleMute = (e) => {
@@ -652,11 +654,16 @@ const VideoCard = React.memo(function VideoCard({ video, onOpenFullscreen }) {
       if (isPlaying) {
         videoRef.current.pause();
         setIsPlaying(false);
-        setActiveVideo(null); // Clear active media
+        setUserPaused(true);
+        setActiveVideo(null);
       } else {
-        setActiveVideo(video.id); // Mark as active (will pause any audio)
-        videoRef.current.play().catch(() => {});
-        setIsPlaying(true);
+        setUserPaused(false);
+        setActiveVideo(video.id);
+        videoRef.current.play()
+          .then(() => setIsPlaying(true))
+          .catch(() => {
+            setActiveVideo(null);
+          });
       }
     }
   }, [isPlaying, video.id, setActiveVideo]);
@@ -685,11 +692,11 @@ const VideoCard = React.memo(function VideoCard({ video, onOpenFullscreen }) {
           <div className="relative w-full h-full bg-muted">
             {canPlayInline ? (
               <>
-                {/* Thumbnail overlay - ALWAYS visible initially, fades when video plays */}
+                {/* Thumbnail overlay - visible only before video is ready */}
                 <div
                   className={cn(
                     "absolute inset-0 z-10 transition-opacity duration-500 bg-muted",
-                    (isVideoReady && isPlaying && !isBuffering) ? "opacity-0 pointer-events-none" : "opacity-100"
+                    isVideoReady ? "opacity-0 pointer-events-none" : "opacity-100"
                   )}
                 >
                   {thumbnailUrl ? (
@@ -729,26 +736,31 @@ const VideoCard = React.memo(function VideoCard({ video, onOpenFullscreen }) {
                   onPlaying={handlePlaying}
                 />
 
-                {/* Controls overlay */}
+                {/* Controls overlay - center play/pause */}
                 <div className={cn(
-                  "absolute inset-0 flex items-center justify-center transition-opacity duration-200 pointer-events-none",
+                  "absolute inset-0 z-20 flex items-center justify-center transition-opacity duration-200 pointer-events-none",
                   showControls || !isPlaying ? "opacity-100" : "opacity-0"
                 )}>
-                  {/* Play/Pause center button */}
-                  {!isPlaying && (
-                    <button
-                      onClick={togglePlay}
-                      className="p-4 rounded-full bg-black/50 hover:bg-black/70 transition-colors pointer-events-auto"
-                    >
+                  <button
+                    onClick={togglePlay}
+                    className="p-4 rounded-full bg-black/50 hover:bg-black/70 transition-colors pointer-events-auto"
+                    aria-label={isPlaying ? "Pausar" : "Reproducir"}
+                  >
+                    {isPlaying ? (
+                      <svg className="h-10 w-10 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <rect x="6" y="4" width="4" height="16" />
+                        <rect x="14" y="4" width="4" height="16" />
+                      </svg>
+                    ) : (
                       <Play className="h-10 w-10 text-white fill-white" />
-                    </button>
-                  )}
+                    )}
+                  </button>
                 </div>
 
                 {/* Bottom controls bar */}
                 <div className={cn(
-                  "absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent flex items-center justify-between transition-opacity duration-200",
-                  showControls ? "opacity-100" : "opacity-0"
+                  "absolute bottom-0 left-0 right-0 z-20 p-3 bg-gradient-to-t from-black/80 to-transparent flex items-center justify-between transition-opacity duration-200",
+                  showControls ? "opacity-100" : "opacity-0 pointer-events-none"
                 )}>
                   <div className="flex items-center gap-2">
                     {/* Play/Pause */}
@@ -963,7 +975,7 @@ const DocumentList = React.memo(function DocumentList({ documents, icon: Icon })
   if (!documents || documents.length === 0) return null;
 
   // Siempre usar el grid con modal - máxima performance
-  return <DocumentGrid documents={documents} icon={Icon} />;
+  return <DocumentViewer documents={documents} icon={Icon} />;
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1005,6 +1017,17 @@ const AudioCard = React.memo(function AudioCard({ audio }) {
       }
     }
   }, [activeMediaId, isThisActive, modalOpen, isPlaying]);
+
+  // Cleanup: pausar audio al desmontar el componente
+  React.useEffect(() => {
+    const audio = audioRef.current;
+    return () => {
+      if (audio) {
+        audio.pause();
+        audio.src = ''; // Liberar recursos
+      }
+    };
+  }, []);
 
   const togglePlay = () => {
     if (!audioRef.current) return;
@@ -1182,7 +1205,17 @@ const AudioCard = React.memo(function AudioCard({ audio }) {
 // DISTINCION CARD
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const DistincionCard = React.memo(function DistincionCard({ item }) {
+const TIPOS_DISTINCION = {
+  reconocimiento: 'Reconocimiento',
+  premio: 'Premio',
+  medalla: 'Medalla',
+  diploma: 'Diploma',
+  condecoracion: 'Condecoración',
+};
+
+const DistincionCard = React.memo(function DistincionCard({ item, onViewPdf }) {
+  const tipoLabel = TIPOS_DISTINCION[item.tipo] || item.tipo;
+
   return (
     <Card className="border-border/50 hover:border-amber-500/30 transition-all duration-300 hover:shadow-lg border-l-4 border-l-amber-500">
       <CardContent className="p-4">
@@ -1190,30 +1223,154 @@ const DistincionCard = React.memo(function DistincionCard({ item }) {
           <div className="p-3 rounded-full bg-gradient-to-br from-amber-500/20 to-yellow-500/20">
             <Award className="h-6 w-6 text-amber-500" />
           </div>
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                {tipoLabel}
+              </span>
+            </div>
             <h4 className="font-semibold line-clamp-2">{item.titulo}</h4>
             {item.otorgante && (
-              <p className="text-sm text-amber-600 dark:text-amber-400 font-medium mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 {item.otorgante}
               </p>
             )}
-            {item.descripcion && (
-              <p className="text-sm text-muted-foreground line-clamp-2 mt-2">
-                {item.descripcion}
-              </p>
-            )}
-            {item.fecha_otorgamiento && (
-              <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-                <Calendar className="h-3 w-3" />
-                {new Date(item.fecha_otorgamiento).toLocaleDateString(DATE_LOCALE, {
-                  day: 'numeric', month: 'long', year: 'numeric'
-                })}
-              </p>
-            )}
+            <div className="flex items-center justify-between mt-3">
+              {item.fecha_otorgamiento && (
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />
+                  {new Date(item.fecha_otorgamiento).toLocaleDateString(DATE_LOCALE, {
+                    year: 'numeric'
+                  })}
+                </p>
+              )}
+              {item.pdf_url && (
+                <button
+                  onClick={() => onViewPdf?.(item)}
+                  className="text-xs text-amber-600 hover:text-amber-500 flex items-center gap-1 transition-colors"
+                >
+                  <FileText className="h-3 w-3" />
+                  Ver documento
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </CardContent>
     </Card>
+  );
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DISTINCIONES PDF MODAL - Modal para ver PDF de distincion
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const DistincionPdfModal = React.memo(function DistincionPdfModal({ item, isOpen, onClose }) {
+  const [isLoading, setIsLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    if (isOpen) setIsLoading(true);
+  }, [isOpen, item?.id]);
+
+  if (!item) return null;
+
+  const pdfUrl = item.pdf_url;
+  const tipoLabel = TIPOS_DISTINCION[item.tipo] || item.tipo;
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-5xl w-[95vw] h-[85vh] flex flex-col p-0 gap-0">
+        <DialogHeader className="p-4 pb-3 border-b shrink-0 bg-gradient-to-r from-amber-500/10 to-yellow-500/10">
+          <div className="flex items-center gap-3 pr-8">
+            <div className="p-2 rounded-lg bg-amber-500/20 shrink-0">
+              <Award className="h-5 w-5 text-amber-500" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <Badge variant="secondary" className="text-xs bg-amber-500/10 text-amber-600">
+                  {tipoLabel}
+                </Badge>
+                {item.fecha_otorgamiento && (
+                  <span className="text-xs text-muted-foreground">
+                    {new Date(item.fecha_otorgamiento).getFullYear()}
+                  </span>
+                )}
+              </div>
+              <DialogTitle className="line-clamp-1">{item.titulo}</DialogTitle>
+              <DialogDescription className="line-clamp-1">
+                {item.otorgante}
+              </DialogDescription>
+            </div>
+            <div className="flex gap-2 shrink-0">
+              <Button variant="outline" size="sm" asChild>
+                <a href={pdfUrl} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="h-4 w-4 mr-1" />
+                  {STRINGS.newTab}
+                </a>
+              </Button>
+              <Button variant="outline" size="sm" asChild>
+                <a href={pdfUrl} download>
+                  <Download className="h-4 w-4 mr-1" />
+                  {STRINGS.download}
+                </a>
+              </Button>
+            </div>
+          </div>
+        </DialogHeader>
+        <div className="flex-1 min-h-0 relative bg-muted/20">
+          {isLoading && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/90">
+              <div className="h-8 w-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+            </div>
+          )}
+          <iframe
+            src={`${pdfUrl}#toolbar=1&navpanes=0&scrollbar=1&view=FitH`}
+            className="w-full h-full border-0"
+            title={`PDF: ${item.titulo}`}
+            style={{ colorScheme: 'light' }}
+            onLoad={() => setIsLoading(false)}
+          />
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DISTINCIONES LIST - Scroll para muchos items (20+)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const DistincionesList = React.memo(function DistincionesList({ items }) {
+  const [selectedItem, setSelectedItem] = React.useState(null);
+  const [modalOpen, setModalOpen] = React.useState(false);
+
+  const handleViewPdf = React.useCallback((item) => {
+    setSelectedItem(item);
+    setModalOpen(true);
+  }, []);
+
+  const handleCloseModal = React.useCallback(() => {
+    setModalOpen(false);
+    setSelectedItem(null);
+  }, []);
+
+  if (!items || items.length === 0) return null;
+
+  return (
+    <>
+      <div className="space-y-4">
+        {items.map(item => (
+          <DistincionCard key={item.id} item={item} onViewPdf={handleViewPdf} />
+        ))}
+      </div>
+
+      {/* Modal para ver PDF */}
+      <DistincionPdfModal
+        item={selectedItem}
+        isOpen={modalOpen}
+        onClose={handleCloseModal}
+      />
+    </>
   );
 });
 
@@ -1361,8 +1518,6 @@ const EstandartesCarousel = React.memo(function EstandartesCarousel({ items }) {
 // PRESIDENTE TIMELINE - Vista profesional para muchos presidentes
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const TIMELINE_MAX_HEIGHT = 600; // px - altura máxima antes de scroll
-
 const PresidenteTimeline = React.memo(function PresidenteTimeline({ members }) {
   if (!members || members.length === 0) return null;
 
@@ -1388,10 +1543,7 @@ const PresidenteTimeline = React.memo(function PresidenteTimeline({ members }) {
   };
 
   return (
-    <div
-      className="relative overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent"
-      style={{ maxHeight: TIMELINE_MAX_HEIGHT }}
-    >
+    <div className="relative">
       {/* Línea vertical central */}
       <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary via-primary/50 to-primary/20" />
 
@@ -1483,43 +1635,18 @@ const PresidenteTimeline = React.memo(function PresidenteTimeline({ members }) {
   );
 });
 
-// Card individual (mantener para otros usos)
-const PresidenteCard = React.memo(function PresidenteCard({ member }) {
-  const avatarUrl = storageUrl(member.avatar);
-  return (
-    <Card className="border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-lg">
-      <CardContent className="p-6 text-center">
-        <div className="relative w-20 h-20 mx-auto mb-4">
-          {avatarUrl ? (
-            <img
-              src={avatarUrl}
-              alt={member.name}
-              className="w-full h-full rounded-full object-cover ring-4 ring-primary/20"
-            />
-          ) : (
-            <div className="w-full h-full rounded-full flex items-center justify-center bg-gradient-to-br from-primary to-primary/70 text-white text-xl font-bold ring-4 ring-primary/20">
-              {getInitials(member.name)}
-            </div>
-          )}
-        </div>
-        <h4 className="font-semibold">{member.name}</h4>
-        <p className="text-sm text-primary font-medium">{member.role}</p>
-        {member.period && (
-          <p className="text-xs text-muted-foreground mt-1">{member.period}</p>
-        )}
-      </CardContent>
-    </Card>
-  );
-});
-
 // ═══════════════════════════════════════════════════════════════════════════════
 // PUBLICACION CARD
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const PublicacionCard = React.memo(function PublicacionCard({ item }) {
+const PublicacionCard = React.memo(function PublicacionCard({ item, onClick }) {
   const imageUrl = storageUrl(item.imagen_portada);
+  const hasPdf = !!(item.pdf_url || item.documento_pdf || item.enlace_externo);
   return (
-    <Card className="overflow-hidden border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-lg group">
+    <Card
+      className="overflow-hidden border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-lg group cursor-pointer"
+      onClick={() => onClick?.(item)}
+    >
       <AspectRatio ratio={3 / 4}>
         <div className="relative w-full h-full bg-muted">
           {imageUrl ? (
@@ -1536,21 +1663,19 @@ const PublicacionCard = React.memo(function PublicacionCard({ item }) {
           {item.tipo && (
             <Badge className="absolute top-3 left-3 capitalize">{item.tipo}</Badge>
           )}
+          {hasPdf && (
+            <div className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-sm rounded-full p-1.5">
+              <FileText className="h-3.5 w-3.5 text-white" />
+            </div>
+          )}
         </div>
       </AspectRatio>
-      <CardContent className="p-4">
-        <h4 className="font-semibold line-clamp-2 group-hover:text-primary transition-colors">
+      <CardContent className="p-3">
+        <h4 className="font-semibold text-sm line-clamp-2 group-hover:text-primary transition-colors">
           {item.titulo}
         </h4>
         {item.autor && (
-          <p className="text-sm text-primary mt-1">{item.autor}</p>
-        )}
-        {item.documento_pdf && (
-          <Button variant="outline" size="sm" className="w-full mt-3" asChild>
-            <a href={item.documento_pdf} target="_blank" rel="noopener noreferrer">
-              <Download className="mr-2 h-4 w-4" /> {STRINGS.download}
-            </a>
-          </Button>
+          <p className="text-xs text-primary mt-1 truncate">{item.autor}</p>
         )}
       </CardContent>
     </Card>
@@ -1558,12 +1683,209 @@ const PublicacionCard = React.memo(function PublicacionCard({ item }) {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// PUBLICACION PDF MODAL - Modal para ver PDF/detalles de publicación
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const PublicacionPdfModal = React.memo(function PublicacionPdfModal({ item, isOpen, onClose }) {
+  const [isLoading, setIsLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    if (isOpen) setIsLoading(true);
+  }, [isOpen, item?.id]);
+
+  if (!item) return null;
+
+  const imageUrl = storageUrl(item.imagen_portada);
+  const pdfUrl = item.pdf_url || item.documento_pdf;
+  const externalUrl = item.enlace_externo;
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className={cn(
+        "w-[95vw] max-h-[90vh] flex flex-col p-0 gap-0",
+        pdfUrl ? "max-w-5xl h-[85vh]" : "max-w-2xl"
+      )}>
+        <DialogHeader className="p-4 pb-3 border-b shrink-0">
+          <div className="flex items-center gap-3 pr-8">
+            <div className="p-2 rounded-lg bg-primary/10 shrink-0">
+              <Newspaper className="h-5 w-5 text-primary" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2 mb-1">
+                {item.tipo && (
+                  <Badge className="capitalize text-xs">{item.tipo}</Badge>
+                )}
+                {item.anio_publicacion && (
+                  <span className="text-xs text-muted-foreground">{item.anio_publicacion}</span>
+                )}
+              </div>
+              <DialogTitle className="line-clamp-1">{item.titulo}</DialogTitle>
+              <DialogDescription className="line-clamp-1">
+                {[item.autor, item.editorial].filter(Boolean).join(' · ')}
+              </DialogDescription>
+            </div>
+            <div className="flex gap-2 shrink-0">
+              {pdfUrl && (
+                <>
+                  <Button variant="outline" size="sm" asChild>
+                    <a href={pdfUrl} target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="h-4 w-4 mr-1" />
+                      {STRINGS.newTab}
+                    </a>
+                  </Button>
+                  <Button variant="outline" size="sm" asChild>
+                    <a href={pdfUrl} download>
+                      <Download className="h-4 w-4 mr-1" />
+                      {STRINGS.download}
+                    </a>
+                  </Button>
+                </>
+              )}
+              {externalUrl && (
+                <Button variant="outline" size="sm" asChild>
+                  <a href={externalUrl} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-4 w-4 mr-1" />
+                    Ver enlace
+                  </a>
+                </Button>
+              )}
+            </div>
+          </div>
+        </DialogHeader>
+
+        <div className="flex-1 min-h-0 relative">
+          {pdfUrl ? (
+            <>
+              {isLoading && (
+                <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/90">
+                  <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                </div>
+              )}
+              <iframe
+                src={`${pdfUrl}#toolbar=1&navpanes=0&scrollbar=1&view=FitH`}
+                className="w-full h-full border-0"
+                title={`PDF: ${item.titulo}`}
+                style={{ colorScheme: 'light' }}
+                onLoad={() => setIsLoading(false)}
+              />
+            </>
+          ) : (
+            <div className="p-6 space-y-4">
+              {imageUrl && (
+                <div className="flex justify-center">
+                  <img
+                    src={imageUrl}
+                    alt={item.titulo}
+                    className="max-h-[40vh] rounded-lg object-contain"
+                  />
+                </div>
+              )}
+              {item.descripcion && (
+                <p className="text-muted-foreground">{item.descripcion}</p>
+              )}
+              {item.isbn && (
+                <p className="text-sm text-muted-foreground">
+                  <span className="font-medium">ISBN:</span> {item.isbn}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PUBLICACIONES CAROUSEL - Carrusel con modal PDF
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const PublicacionesCarousel = React.memo(function PublicacionesCarousel({ items }) {
+  const [selectedItem, setSelectedItem] = React.useState(null);
+  const [modalOpen, setModalOpen] = React.useState(false);
+  const [carouselApi, setCarouselApi] = React.useState(null);
+  const [currentSlide, setCurrentSlide] = React.useState(0);
+
+  React.useEffect(() => {
+    if (!carouselApi) return;
+    carouselApi.on('select', () => {
+      setCurrentSlide(carouselApi.selectedScrollSnap());
+    });
+  }, [carouselApi]);
+
+  const handleOpen = React.useCallback((item) => {
+    setSelectedItem(item);
+    setModalOpen(true);
+  }, []);
+
+  const handleClose = React.useCallback(() => {
+    setModalOpen(false);
+    setSelectedItem(null);
+  }, []);
+
+  if (!items || items.length === 0) return null;
+
+  return (
+    <>
+      <Carousel
+        opts={{ align: 'start', loop: items.length > 2 }}
+        setApi={setCarouselApi}
+        className="w-full"
+      >
+        <CarouselContent className="-ml-3">
+          {items.map((item) => (
+            <CarouselItem key={item.id} className="pl-3 basis-1/2">
+              <PublicacionCard item={item} onClick={handleOpen} />
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+        {items.length > 2 && (
+          <>
+            <CarouselPrevious className="left-0 bg-background/80 hover:bg-background" />
+            <CarouselNext className="right-0 bg-background/80 hover:bg-background" />
+          </>
+        )}
+      </Carousel>
+
+      {/* Dots */}
+      {items.length > 2 && (
+        <div className="flex justify-center gap-1.5 mt-3">
+          {items.map((_, idx) => (
+            <button
+              key={idx}
+              className={cn(
+                "w-2 h-2 rounded-full transition-all",
+                idx === currentSlide
+                  ? "bg-primary w-5"
+                  : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
+              )}
+              onClick={() => carouselApi?.scrollTo(idx)}
+              aria-label={`Ir a publicación ${idx + 1}`}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Modal PDF */}
+      <PublicacionPdfModal
+        item={selectedItem}
+        isOpen={modalOpen}
+        onClose={handleClose}
+      />
+    </>
+  );
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // COMUNICADO CARD
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const ComunicadoCard = React.memo(function ComunicadoCard({ item }) {
+const ComunicadoCard = React.memo(function ComunicadoCard({ item, onClick }) {
   return (
-    <Card className="border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-lg">
+    <Card
+      className="border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-lg cursor-pointer group"
+      onClick={onClick}
+    >
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <Badge variant="outline" className="capitalize">{item.tipo || STRINGS.announcement}</Badge>
@@ -1574,7 +1896,7 @@ const ComunicadoCard = React.memo(function ComunicadoCard({ item }) {
             </span>
           )}
         </div>
-        <CardTitle className="text-lg mt-2">{item.titulo}</CardTitle>
+        <CardTitle className="text-lg mt-2 group-hover:text-primary transition-colors">{item.titulo}</CardTitle>
       </CardHeader>
       <CardContent>
         {item.extracto && (
@@ -1590,6 +1912,143 @@ const ComunicadoCard = React.memo(function ComunicadoCard({ item }) {
     </Card>
   );
 });
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// COMUNICADO MODAL - Contenido completo del comunicado
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const ComunicadoModal = React.memo(function ComunicadoModal({ item, isOpen, onClose }) {
+  if (!item) return null;
+
+  const imageUrl = item.imagen ? storageUrl(item.imagen) : null;
+  const hasImage = !!imageUrl;
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className={cn(
+        "w-[95vw] max-h-[85vh] flex flex-col p-0 gap-0",
+        hasImage ? "max-w-4xl" : "max-w-2xl"
+      )}>
+        {/* Header */}
+        <DialogHeader className="p-5 pb-4 border-b shrink-0">
+          <div className="flex items-center gap-3 pr-8">
+            <div className="p-2 rounded-lg bg-primary/10 shrink-0">
+              <Megaphone className="h-5 w-5 text-primary" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2 mb-1">
+                <Badge variant="outline" className="capitalize text-xs">{item.tipo || STRINGS.announcement}</Badge>
+                {item.numero && (
+                  <Badge variant="secondary" className="font-mono text-xs">{item.numero}</Badge>
+                )}
+                {item.fecha && (
+                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Calendar className="h-3 w-3" />
+                    {new Date(item.fecha).toLocaleDateString(DATE_LOCALE, { year: 'numeric', month: 'long', day: 'numeric' })}
+                  </span>
+                )}
+              </div>
+              <DialogTitle className="line-clamp-2">{item.titulo}</DialogTitle>
+              <DialogDescription className="sr-only">Contenido del comunicado</DialogDescription>
+            </div>
+          </div>
+        </DialogHeader>
+
+        {/* Body - responsive: imagen izq + contenido der en desktop, apilado en mobile */}
+        <div className="flex-1 overflow-y-auto p-5">
+          <div className={cn(hasImage && "md:flex md:gap-6")}>
+            {hasImage && (
+              <div className="md:w-2/5 shrink-0 mb-4 md:mb-0">
+                <img
+                  src={imageUrl}
+                  alt={item.titulo}
+                  className="w-full rounded-lg object-contain"
+                />
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <div
+                className="prose prose-sm dark:prose-invert max-w-none break-words"
+                dangerouslySetInnerHTML={{ __html: item.contenido || item.extracto }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Footer con firmante */}
+        {item.firmante && (
+          <div className="p-4 border-t shrink-0 bg-muted/30">
+            <p className="text-sm font-medium flex items-center gap-2">
+              <User className="h-4 w-4 text-primary" />
+              <span>{item.firmante}</span>
+              {item.cargo_firmante && (
+                <span className="text-muted-foreground font-normal">— {item.cargo_firmante}</span>
+              )}
+            </p>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// COMUNICADOS LIST - Cards clickeables con modal de contenido
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const ComunicadosList = React.memo(function ComunicadosList({ items }) {
+  const [selectedItem, setSelectedItem] = React.useState(null);
+  const [modalOpen, setModalOpen] = React.useState(false);
+
+  const handleOpen = React.useCallback((item) => {
+    setSelectedItem(item);
+    setModalOpen(true);
+  }, []);
+
+  const handleClose = React.useCallback(() => {
+    setModalOpen(false);
+    setSelectedItem(null);
+  }, []);
+
+  if (!items || items.length === 0) return null;
+
+  return (
+    <>
+      {items.map(item => (
+        <ComunicadoCard key={item.id} item={item} onClick={() => handleOpen(item)} />
+      ))}
+      <ComunicadoModal item={selectedItem} isOpen={modalOpen} onClose={handleClose} />
+    </>
+  );
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ANNOUNCEMENT MODAL - Modal de anuncio al entrar a la página (1 comunicado destacado)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const ANNOUNCEMENT_KEY = 'announcement_seen_';
+
+function AnnouncementModal({ item }) {
+  const [open, setOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!item) return;
+    const key = ANNOUNCEMENT_KEY + item.id;
+    if (sessionStorage.getItem(key)) return;
+    // Pequeño delay para que no aparezca instantáneamente
+    const timer = setTimeout(() => setOpen(true), 800);
+    return () => clearTimeout(timer);
+  }, [item]);
+
+  const handleClose = React.useCallback(() => {
+    setOpen(false);
+    if (item) sessionStorage.setItem(ANNOUNCEMENT_KEY + item.id, '1');
+  }, [item]);
+
+  if (!item) return null;
+
+  return <ComunicadoModal item={item} isOpen={open} onClose={handleClose} />;
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // PANEL CONFIG - Configuración de las 10 secciones individuales
@@ -1695,25 +2154,15 @@ const PanelRenderer = React.memo(function PanelRenderer({ panelId, data }) {
           <AudioCard key={item.id} audio={item} />
         ));
       case 'distinciones':
-        return items.map(item => (
-          <DistincionCard key={item.id} item={item} />
-        ));
+        return <DistincionesList items={items} />;
       case 'estandartes-grid':
         return <EstandartesCarousel items={items} />;
       case 'publicaciones-grid':
-        return (
-          <div className="grid grid-cols-2 gap-4">
-            {items.map(item => (
-              <PublicacionCard key={item.id} item={item} />
-            ))}
-          </div>
-        );
+        return <PublicacionesCarousel items={items} />;
       case 'presidentes-grid':
         return <PresidenteTimeline members={items} />;
       case 'comunicados':
-        return items.map(item => (
-          <ComunicadoCard key={item.id} item={item} />
-        ));
+        return <ComunicadosList items={items} />;
       default:
         return null;
     }
@@ -1729,9 +2178,14 @@ const PanelRenderer = React.memo(function PanelRenderer({ panelId, data }) {
           {items.length}
         </Badge>
       </div>
-      {/* Content */}
-      <div className="space-y-4">
-        {renderContent()}
+      {/* Content - Scroll uniforme para todas las secciones */}
+      <div
+        className="relative overflow-y-auto scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent"
+        style={{ maxHeight: PANEL_MAX_HEIGHT }}
+      >
+        <div className="space-y-4">
+          {renderContent()}
+        </div>
       </div>
     </div>
   );
@@ -1813,6 +2267,7 @@ export function ContentColumns({
   distinciones = [],
   publicaciones = [],
   comunicados = [],
+  comunicadoDestacado = null,
   config,
   className,
 }) {
@@ -1896,6 +2351,9 @@ export function ContentColumns({
           </DndContext>
         </div>
       </section>
+
+      {/* Modal de anuncio - comunicado destacado */}
+      <AnnouncementModal item={comunicadoDestacado} />
     </MediaProvider>
   );
 }

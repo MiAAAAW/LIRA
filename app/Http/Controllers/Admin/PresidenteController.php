@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Presidente;
+use App\Models\SiteSetting;
 use App\Services\ImageProcessingService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -23,12 +24,8 @@ class PresidenteController extends Controller
 
         return Inertia::render('Admin/Presidentes/Index', [
             'items' => $items,
+            'sectionVisible' => SiteSetting::isSectionVisible('presidentes'),
         ]);
-    }
-
-    public function create(): Response
-    {
-        return Inertia::render('Admin/Presidentes/Create');
     }
 
     public function store(Request $request)
@@ -68,20 +65,6 @@ class PresidenteController extends Controller
 
         return redirect()->route('admin.presidentes.index')
             ->with('success', 'Presidente creado correctamente');
-    }
-
-    public function show(Presidente $presidente): Response
-    {
-        return Inertia::render('Admin/Presidentes/Show', [
-            'item' => $presidente,
-        ]);
-    }
-
-    public function edit(Presidente $presidente): Response
-    {
-        return Inertia::render('Admin/Presidentes/Edit', [
-            'item' => $presidente,
-        ]);
     }
 
     public function update(Request $request, Presidente $presidente)

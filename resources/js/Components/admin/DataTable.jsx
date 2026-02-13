@@ -24,6 +24,8 @@ import DeleteDialog from './DeleteDialog';
 import FormField from './FormField';
 import FileUpload from './FileUpload';
 import DirectUpload from './DirectUpload';
+import RichTextEditor from './RichTextEditor';
+import SectionToggle from './SectionToggle';
 
 export default function DataTable({
   title,
@@ -41,6 +43,8 @@ export default function DataTable({
   showRoute,
   pagination,
   className,
+  // Section toggle (optional)
+  sectionToggle,
   // Modal props
   formFields = null,
   storeRoute = null,
@@ -48,11 +52,16 @@ export default function DataTable({
   modalTitleCreate = 'Crear registro',
   modalTitleEdit = 'Editar registro',
   modalDescription = 'Complete los campos del formulario.',
+  // Featured config (optional) - controls "Destacar" behavior
+  // { exclusive: bool, label: string, warningText: string }
+  featuredConfig = null,
 }) {
   const [search, setSearch] = useState('');
   const [deleteItem, setDeleteItem] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [clientErrors, setClientErrors] = useState({});
 
   // Determine if using modal mode
   const useModal = formFields && (storeRoute || updateRoute);
@@ -64,7 +73,8 @@ export default function DataTable({
       if (field.type === 'checkbox') {
         initial[field.name] = item?.[field.name] ?? false;
       } else {
-        initial[field.name] = item?.[field.name] ?? '';
+        // Use field.defaultValue for new records, fallback to empty
+        initial[field.name] = item?.[field.name] ?? (field.defaultValue || '');
       }
     });
     if (item) {
@@ -111,6 +121,14 @@ export default function DataTable({
 
   const handleFormChange = (name, value) => {
     setFormData(name, value);
+    // Clear client error for this field when user changes it
+    if (clientErrors[name]) {
+      setClientErrors(prev => {
+        const next = { ...prev };
+        delete next[name];
+        return next;
+      });
+    }
   };
 
   const handleOpenCreate = () => {
@@ -120,7 +138,14 @@ export default function DataTable({
     setFormData('is_published', true);
     setFormData('is_featured', false);
     setFormData('orden', 0);
+    // Apply field-level defaults (e.g. select defaultValue)
+    formFields?.forEach(field => {
+      if (field.defaultValue !== undefined) {
+        setFormData(field.name, field.defaultValue);
+      }
+    });
     clearErrors();
+    setClientErrors({});
     setModalOpen(true);
   };
 
@@ -138,12 +163,36 @@ export default function DataTable({
   const handleCloseModal = () => {
     setModalOpen(false);
     setEditingItem(null);
+    setIsUploading(false);
+    setClientErrors({});
     reset();
     clearErrors();
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    // Client-side validation for required fields
+    const newClientErrors = {};
+    const fileTypes = ['direct-upload', 'file', 'image'];
+    formFields?.forEach(field => {
+      if (!field.required) return;
+      const val = formData[field.name];
+      if (fileTypes.includes(field.type)) {
+        // In edit mode, existing file is handled by backend - skip file validation
+        if (!val && !editingItem) {
+          newClientErrors[field.name] = `${field.label} es obligatorio`;
+        }
+      } else if (!val && val !== 0 && val !== false) {
+        newClientErrors[field.name] = `${field.label} es obligatorio`;
+      }
+    });
+
+    if (Object.keys(newClientErrors).length > 0) {
+      setClientErrors(newClientErrors);
+      return;
+    }
+    setClientErrors({});
 
     const submitData = new FormData();
 
@@ -227,7 +276,10 @@ export default function DataTable({
     <Card className={className}>
       <CardHeader>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <CardTitle>{title}</CardTitle>
+          <div className="flex items-center gap-4">
+            <CardTitle>{title}</CardTitle>
+            {sectionToggle && <SectionToggle {...sectionToggle} />}
+          </div>
 
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             {/* Search */}
@@ -422,39 +474,66 @@ export default function DataTable({
             <div className="flex-1 overflow-y-auto max-h-[60vh] pr-2">
               <form id="crud-form" onSubmit={handleSubmit} className="space-y-4 py-2">
                 {/* Publish Options - FIRST for visibility */}
-                <div className="p-3 bg-muted/50 rounded-lg border">
-                  <div className="flex flex-wrap items-center gap-6">
+                <div className="flex flex-wrap items-center gap-4 p-3 bg-muted/50 rounded-lg border">
+                  <FormField
+                    label="Publicar"
+                    name="is_published"
+                    type="checkbox"
+                    value={formData.is_published}
+                    onChange={handleFormChange}
+                  />
+                  <div className="w-px h-5 bg-border" />
+                  <div>
                     <FormField
-                      label="Publicar"
-                      name="is_published"
-                      type="checkbox"
-                      value={formData.is_published}
-                      onChange={handleFormChange}
-                    />
-                    <FormField
-                      label="Destacar"
+                      label={featuredConfig?.label || 'Destacar'}
                       name="is_featured"
                       type="checkbox"
                       value={formData.is_featured}
                       onChange={handleFormChange}
                     />
-                    <div className="w-24">
-                      <FormField
-                        label="Orden"
-                        name="orden"
-                        type="number"
-                        value={formData.orden}
-                        onChange={handleFormChange}
-                        placeholder="0"
-                      />
-                    </div>
+                    {featuredConfig?.exclusive && formData.is_featured && (() => {
+                      const currentFeatured = data.find(item => item.is_featured && item.id !== editingItem?.id);
+                      return currentFeatured ? (
+                        <p className="text-xs text-amber-500 mt-1 flex items-center gap-1">
+                          <DynamicIcon name="AlertTriangle" className="h-3 w-3 flex-shrink-0" />
+                          {featuredConfig.warningText}
+                        </p>
+                      ) : null;
+                    })()}
+                  </div>
+                  <div className="w-px h-5 bg-border" />
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">Orden</span>
+                    <input
+                      type="number"
+                      value={formData.orden || 0}
+                      onChange={(e) => handleFormChange('orden', e.target.value)}
+                      className="w-16 h-8 rounded-md border border-input bg-background px-2 text-sm text-center"
+                    />
                   </div>
                 </div>
 
                 {/* Dynamic Fields */}
                 <div className="grid gap-4 sm:grid-cols-2">
                   {formFields?.map((field) => {
-                    const isFullWidth = field.fullWidth || field.type === 'textarea' || field.type === 'file' || field.type === 'image' || field.type === 'direct-upload';
+                    const isFullWidth = field.fullWidth || field.type === 'textarea' || field.type === 'rich-text' || field.type === 'file' || field.type === 'image' || field.type === 'direct-upload';
+
+                    // Rich Text Editor (Tiptap)
+                    if (field.type === 'rich-text') {
+                      return (
+                        <div key={field.name} className="sm:col-span-2">
+                          <RichTextEditor
+                            label={field.label}
+                            name={field.name}
+                            value={formData[field.name]}
+                            onChange={handleFormChange}
+                            error={errors[field.name] || clientErrors[field.name]}
+                            required={field.required}
+                            placeholder={field.placeholder}
+                          />
+                        </div>
+                      );
+                    }
 
                     // Direct Upload para videos/audios/documentos grandes (va directo a CDN)
                     if (field.type === 'direct-upload') {
@@ -478,8 +557,9 @@ export default function DataTable({
                             maxSize={field.maxSize}
                             required={field.required && !editingItem}
                             helpText={field.helpText}
-                            error={errors[field.name]}
+                            error={errors[field.name] || clientErrors[field.name]}
                             onChange={handleFormChange}
+                            onUploadingChange={setIsUploading}
                             value={formData[field.name]}
                             existingFile={existingFile}
                           />
@@ -495,8 +575,9 @@ export default function DataTable({
                             name={field.name}
                             value={formData[field.name]}
                             onChange={handleFormChange}
-                            error={errors[field.name]}
+                            error={errors[field.name] || clientErrors[field.name]}
                             accept={field.accept || (field.type === 'image' ? 'image/*' : '*')}
+                            maxSize={field.maxSize}
                             required={field.required}
                             helpText={field.helpText}
                             currentFile={editingItem?.[field.name]}
@@ -513,7 +594,7 @@ export default function DataTable({
                           type={field.type || 'text'}
                           value={formData[field.name]}
                           onChange={handleFormChange}
-                          error={errors[field.name]}
+                          error={errors[field.name] || clientErrors[field.name]}
                           required={field.required}
                           placeholder={field.placeholder}
                           helpText={field.helpText}
@@ -535,11 +616,16 @@ export default function DataTable({
                   >
                     Cancelar
                   </Button>
-                  <Button type="submit" disabled={processing}>
+                  <Button type="submit" disabled={processing || isUploading}>
                     {processing ? (
                       <>
                         <DynamicIcon name="Loader2" className="h-4 w-4 mr-2 animate-spin" />
                         Guardando...
+                      </>
+                    ) : isUploading ? (
+                      <>
+                        <DynamicIcon name="Loader2" className="h-4 w-4 mr-2 animate-spin" />
+                        Subiendo archivo...
                       </>
                     ) : (
                       <>
@@ -575,6 +661,15 @@ function renderCell(item, col) {
         {value ? 'Publicado' : 'Borrador'}
       </Badge>
     );
+  }
+
+  if (col.type === 'featured') {
+    return value ? (
+      <Badge className="bg-amber-500/15 text-amber-500 border-amber-500/20">
+        <DynamicIcon name="Star" className="h-3 w-3 mr-1 fill-current" />
+        {col.featuredLabel || 'Destacado'}
+      </Badge>
+    ) : null;
   }
 
   if (col.type === 'date') {
