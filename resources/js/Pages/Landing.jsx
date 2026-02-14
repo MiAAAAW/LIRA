@@ -73,13 +73,18 @@ export default function Landing({
           {/* Hero Section - con video de fondo desde CDN */}
           <Hero config={heroConfig} />
 
+          {/* Fog transition — dark blur matching both sections */}
+          <div className="relative -mt-12 z-20 h-12 pointer-events-none">
+            <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-10 bg-black/40 blur-[40px]" />
+          </div>
+
           {/* 2-Column Layout: All 10 modules — con background image del CDN */}
           <div
             className="relative bg-cover bg-center bg-fixed"
             style={cdnUrl ? { backgroundImage: `url(${cdnUrl}/landing/background.jpeg)` } : undefined}
           >
-            <div className="absolute inset-0 bg-background/85 backdrop-blur-[2px]" />
-            <div className="relative">
+            <div className="absolute inset-0 bg-background/40" />
+            <div className="relative z-30">
               <ContentColumns
                 // Institutional Column
                 ley24325={ley24325}

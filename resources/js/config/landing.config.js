@@ -36,16 +36,11 @@ export const landingConfig = {
   navigation: {
     logo: {
       text: "Lira Puno",
-      icon: "Music",
       href: "/",
     },
     items: [
-      { label: "Inicio", href: "#" },
-      { label: "Marco Legal", href: "#marco-legal" },
-      { label: "Normativas", href: "#normativas" },
-      { label: "Registros", href: "#registros" },
-      { label: "Historia", href: "#historia" },
-      { label: "Liderazgo", href: "#liderazgo" },
+      { label: "Inicio", href: "#hero" },
+      { label: "Contenido", href: "#contenido" },
     ],
     cta: {
       text: "Admin",
@@ -89,6 +84,7 @@ export const landingConfig = {
   // COLUMNS LAYOUT - Configuración para el layout de 2 columnas paralelas
   // ═══════════════════════════════════════════════════════════════════════════════
   columns: {
+    title: "Contenido Institucional",
     institutional: {
       title: "Marco Institucional",
       icon: "Scale",
@@ -124,35 +120,17 @@ export const landingConfig = {
       icon: "Music",
     },
     description: "Conjunto Pandillero Lira Puno. Patrimonio Cultural de la Nación.",
-    columns: [
-      {
-        title: "Institucional",
-        links: [
-          { text: "Ley 24325", href: "#contenido" },
-          { text: "Base Legal", href: "#contenido" },
-          { text: "INDECOPI", href: "#contenido" },
-          { text: "Estandartes", href: "#contenido" },
-          { text: "Presidentes", href: "#contenido" },
-        ],
-      },
-      {
-        title: "Contenido",
-        links: [
-          { text: "Videos", href: "#contenido" },
-          { text: "Audios", href: "#contenido" },
-          { text: "Publicaciones", href: "#contenido" },
-          { text: "Comunicados", href: "#contenido" },
-          { text: "Distinciones", href: "#contenido" },
-        ],
-      },
-      {
-        title: "Administración",
-        links: [
-          { text: "Panel Admin", href: "/admin" },
-        ],
-      },
+    columns: [],
+    nav: [
+      { text: "Inicio", href: "#hero" },
+      { text: "Contenido", href: "#contenido" },
+      { text: "Admin", href: "/admin" },
     ],
-    social: {},
+    social: {
+      facebook: "#",
+      instagram: "#",
+      youtube: "#",
+    },
     copyright: "© 2026 Conjunto Pandillero Lira Puno.",
     bottomLinks: [],
   },

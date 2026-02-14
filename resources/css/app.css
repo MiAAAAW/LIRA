@@ -155,6 +155,7 @@
       );
     background-attachment: fixed;
     min-height: 100vh;
+    overflow-x: hidden;
   }
   .dark body {
     /* Lago de Noche - Aguas profundas, cielo estrellado */
@@ -709,12 +710,122 @@
     inset 0 1px 0 hsl(199 65% 60% / 0.1);
 }
 
-/* Footer - Profundidades del lago */
+/* Footer - Glass adaptativo (misma estética que Navbar) */
 .bg-section-footer {
-  background: linear-gradient(180deg, hsl(214 45% 15%) 0%, hsl(214 50% 8%) 100%);
+  background: hsl(var(--background) / 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid hsl(var(--border) / 0.5);
 }
-.dark .bg-section-footer {
-  background: linear-gradient(180deg, hsl(214 50% 6%) 0%, hsl(214 55% 3%) 100%);
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FOOTER ANIMADO - "Lago Titicaca de Noche"
+   Partículas, shimmer y efectos hover
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* --- Sistema de Partículas --- */
+.footer-particles {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.footer-particle {
+  position: absolute;
+  bottom: -10px;
+  border-radius: 50%;
+  animation: particle-float-up 8s ease-in-out infinite;
+  will-change: transform;
+  transform: translateZ(0);
+  box-shadow: 0 0 6px currentColor;
+}
+
+@keyframes particle-float-up {
+  0% { transform: translateY(0) translateX(0); opacity: 0; }
+  10% { opacity: 0.5; }
+  50% { transform: translateY(-120px) translateX(15px); }
+  90% { opacity: 0.5; }
+  100% { transform: translateY(-250px) translateX(-10px); opacity: 0; }
+}
+
+/* --- Link Hover con Underline Deslizante Dorado --- */
+.footer-link {
+  position: relative;
+  display: inline-block;
+}
+
+.footer-link::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: linear-gradient(90deg, hsl(45 90% 55%), hsl(43 85% 45%));
+  transition: width 0.3s ease;
+}
+
+.footer-link:hover::after {
+  width: 100%;
+}
+
+.footer-link:hover {
+  text-shadow: 0 0 8px hsl(45 90% 55% / 0.3);
+}
+
+/* --- Shimmer de Fondo --- */
+.footer-shimmer-bg {
+  position: relative;
+}
+
+.footer-shimmer-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    transparent 0%,
+    hsl(203 55% 20% / 0.05) 25%,
+    hsl(43 85% 45% / 0.03) 50%,
+    hsl(199 65% 30% / 0.05) 75%,
+    transparent 100%
+  );
+  background-size: 300% 300%;
+  animation: footer-gradient-shift 12s ease infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes footer-gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* --- Logo Pulse Dorado --- */
+@keyframes logo-gold-pulse {
+  0%, 100% { text-shadow: 0 0 4px hsl(45 90% 55% / 0.2); }
+  50% { text-shadow: 0 0 12px hsl(45 90% 55% / 0.5), 0 0 24px hsl(43 85% 45% / 0.2); }
+}
+
+.footer-logo-pulse {
+  animation: logo-gold-pulse 3s ease-in-out infinite;
+}
+
+/* --- Guards de Rendimiento --- */
+@media (max-width: 768px) {
+  .footer-particles {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .footer-particle,
+  .footer-shimmer-bg::before,
+  .footer-logo-pulse {
+    animation: none !important;
+  }
 }
 
 @layer base {

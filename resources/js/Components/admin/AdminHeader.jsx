@@ -83,14 +83,6 @@ export default function AdminHeader({
           {/* Theme Toggle */}
           <ModeToggle />
 
-          {/* Notifications */}
-          <Button variant="ghost" size="icon" className="relative">
-            <DynamicIcon name="Bell" className="h-5 w-5" />
-            <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 text-[10px] font-medium text-white flex items-center justify-center">
-              3
-            </span>
-          </Button>
-
           {/* User Menu */}
           <div className="flex items-center gap-3 pl-2 border-l dark:border-gray-700">
             <div className="hidden sm:block text-right">

@@ -98,9 +98,10 @@ export function Navbar({ config, className }) {
                 href={item.href}
                 onClick={(e) => handleNavClick(e, item.href)}
                 className={cn(
-                  'px-4 py-2 text-sm font-medium text-muted-foreground',
-                  'hover:text-foreground transition-colors rounded-md',
-                  'hover:bg-muted/50'
+                  'px-4 py-2 text-sm font-medium transition-colors rounded-md',
+                  isScrolled
+                    ? 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                    : 'text-white/85 hover:text-white hover:bg-white/10'
                 )}
                 target={item.external ? '_blank' : undefined}
                 rel={item.external ? 'noopener noreferrer' : undefined}
@@ -139,7 +140,7 @@ export function Navbar({ config, className }) {
               variant="ghost"
               size="icon"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="h-9 w-9"
+              className={cn("h-9 w-9", !isScrolled && "text-white")}
             >
               {isMobileMenuOpen ? (
                 <X className="h-5 w-5" />

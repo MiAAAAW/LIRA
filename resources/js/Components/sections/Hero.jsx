@@ -229,7 +229,7 @@ function ModulesGrid({ modules, dynamicStats }) {
 export function Hero({ config, className }) {
   // Smooth scroll to next section
   const handleScrollDown = () => {
-    const nextSection = document.querySelector('#historia');
+    const nextSection = document.querySelector('#contenido');
     if (nextSection) {
       nextSection.scrollIntoView({ behavior: 'smooth' });
     }
@@ -255,6 +255,7 @@ export function Hero({ config, className }) {
 
   return (
     <section
+      id="hero"
       className={cn(
         'relative min-h-screen flex items-center justify-center overflow-hidden',
         'pt-20 pb-16',
@@ -265,7 +266,7 @@ export function Hero({ config, className }) {
       <HeroBackground video={config.video} />
 
       {/* Overlay para legibilidad del texto */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-black/15 to-transparent pointer-events-none" />
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="max-w-4xl mx-auto text-center">
@@ -300,7 +301,7 @@ export function Hero({ config, className }) {
           {/* Subtitle - ALMA MATER */}
           {config.subtitle && (
             <MotionWrapper direction="up" delay={0.15}>
-              <p className="text-sm sm:text-base tracking-[0.2em] text-white/80 font-medium mb-4 drop-shadow-md">
+              <p className="text-lg sm:text-2xl tracking-[0.2em] text-white font-semibold mb-4 drop-shadow-lg">
                 {config.subtitle}
               </p>
             </MotionWrapper>
@@ -309,7 +310,7 @@ export function Hero({ config, className }) {
           {/* Years */}
           {config.years && (
             <MotionWrapper direction="up" delay={0.2}>
-              <p className="text-lg sm:text-xl text-white/90 font-semibold tracking-widest drop-shadow-lg">
+              <p className="text-xl sm:text-3xl text-white font-bold tracking-widest drop-shadow-lg">
                 {config.years}
               </p>
             </MotionWrapper>

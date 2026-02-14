@@ -34,6 +34,7 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            'cdnUrl' => rtrim(config('filesystems.disks.r2.url', ''), '/'),
         ];
     }
 }

@@ -75,8 +75,8 @@ const STRINGS = {
   listen: 'Escuchar',
   composer: 'Compositor:',
   announcement: 'Comunicado',
-  sectionTitle: 'Contenido Institucional',
-  sectionSubtitle: 'Arrastra los paneles para reorganizar el contenido',
+  sectionTitle: '', // from config.columns.title
+  sectionSubtitle: '', // from config.columns.subtitle
   docNavLabel: 'Navegación de documentos',
 };
 
@@ -1670,12 +1670,12 @@ const PublicacionCard = React.memo(function PublicacionCard({ item, onClick }) {
           )}
         </div>
       </AspectRatio>
-      <CardContent className="p-3">
-        <h4 className="font-semibold text-sm line-clamp-2 group-hover:text-primary transition-colors">
+      <CardContent className="p-4">
+        <h4 className="font-semibold line-clamp-1 group-hover:text-primary transition-colors">
           {item.titulo}
         </h4>
         {item.autor && (
-          <p className="text-xs text-primary mt-1 truncate">{item.autor}</p>
+          <p className="text-sm text-muted-foreground mt-1 truncate">{item.autor}</p>
         )}
       </CardContent>
     </Card>
@@ -2169,7 +2169,7 @@ const PanelRenderer = React.memo(function PanelRenderer({ panelId, data }) {
   };
 
   return (
-    <div className="h-full">
+    <div className="h-full flex flex-col">
       {/* Header */}
       <div className="flex items-center gap-2 mb-4">
         <Icon className="h-5 w-5 text-primary" />
@@ -2180,7 +2180,7 @@ const PanelRenderer = React.memo(function PanelRenderer({ panelId, data }) {
       </div>
       {/* Content - Scroll uniforme para todas las secciones */}
       <div
-        className="relative overflow-y-auto scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent"
+        className="relative flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent"
         style={{ maxHeight: PANEL_MAX_HEIGHT }}
       >
         <div className="space-y-4">
@@ -2232,7 +2232,7 @@ const SortablePanel = React.memo(function SortablePanel({ id, panelNumber, total
       role="listitem"
       data-panel-id={id}
       className={cn(
-        "relative group w-full lg:w-[calc(50%-12px)] bg-card border rounded-xl p-6 transition-all select-none",
+        "relative group w-full lg:w-[calc(50%-12px)] bg-card/40 backdrop-blur-sm border rounded-xl p-6 transition-all select-none",
         isDragging
           ? "border-primary shadow-2xl cursor-grabbing"
           : "border-border/50 hover:border-primary/30 cursor-grab"
@@ -2316,14 +2316,13 @@ export function ContentColumns({
 
   return (
     <MediaProvider>
-      <section className={cn("py-8 md:py-12", className)}>
+      <section id="contenido" className={cn("pt-20 md:pt-28 pb-8 md:pb-12", className)}>
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <MotionWrapper direction="up" className="text-center mb-8">
-            <h2 className="text-2xl md:text-3xl font-bold mb-2">{STRINGS.sectionTitle}</h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              {STRINGS.sectionSubtitle}
-            </p>
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white">
+              {config?.columns?.title || STRINGS.sectionTitle}
+            </h2>
           </MotionWrapper>
 
           {/* Grid de paneles con @dnd-kit */}
