@@ -19,6 +19,7 @@ use App\Http\Controllers\Admin\EventoController;
 use App\Http\Controllers\Admin\SancionController;
 use App\Http\Controllers\Admin\AsistenciaReportController;
 use App\Http\Controllers\Admin\HeroConfigController;
+use App\Http\Controllers\Admin\MusicConfigController;
 use App\Http\Controllers\Api\DirectUploadController;
 use Illuminate\Support\Facades\Route;
 
@@ -91,6 +92,9 @@ Route::prefix('admin')
         // Hero Config (Landing Page)
         Route::resource('hero-config', HeroConfigController::class)->only(['index', 'store', 'update', 'destroy'])->parameters(['hero-config' => 'heroConfig']);
 
+        // Music Config (Landing Page - Música de Fondo)
+        Route::resource('music-config', MusicConfigController::class)->only(['index', 'store', 'update', 'destroy'])->parameters(['music-config' => 'musicConfig']);
+
         // Grupo 3: Miembros y Asistencia
         Route::resource('miembros', MiembroController::class)->only(['index', 'store', 'update', 'destroy']);
         Route::resource('eventos', EventoController::class)->only(['index', 'store', 'update', 'destroy']);
@@ -122,6 +126,7 @@ Route::prefix('admin')
         Route::post('eventos/{evento}/toggle-publish', [EventoController::class, 'togglePublish'])->name('eventos.toggle-publish');
         Route::post('sanciones/{sancion}/toggle-publish', [SancionController::class, 'togglePublish'])->name('sanciones.toggle-publish');
         Route::post('hero-config/{heroConfig}/toggle-featured', [HeroConfigController::class, 'toggleFeatured'])->name('hero-config.toggle-featured');
+        Route::post('music-config/{musicConfig}/toggle-featured', [MusicConfigController::class, 'toggleFeatured'])->name('music-config.toggle-featured');
     });
 
 /*

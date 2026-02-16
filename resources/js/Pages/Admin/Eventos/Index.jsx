@@ -4,23 +4,10 @@ import DataTable from '@/Components/admin/DataTable';
 import { Button } from '@/Components/ui/button';
 import { Dialog, DialogContent, DialogTitle } from '@/Components/ui/dialog';
 import DynamicIcon from '@/Components/DynamicIcon';
+import { EVENTO_TIPO_LABELS, EVENTO_TIPO_COLORS } from '@/lib/admin-constants';
 import { AsistenciaContent } from './Asistencia';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-
-const tipoColors = {
-  ensayo: 'bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-400',
-  reunion: 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400',
-  presentacion: 'bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-400',
-  otro: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
-};
-
-const tipoLabels = {
-  ensayo: 'Ensayo',
-  reunion: 'Reunión',
-  presentacion: 'Presentación',
-  otro: 'Otro',
-};
 
 export default function Index({ items }) {
   const [selectedEvento, setSelectedEvento] = useState(null);
@@ -70,8 +57,8 @@ export default function Index({ items }) {
       key: 'tipo',
       label: 'Tipo',
       render: (value) => (
-        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${tipoColors[value] || tipoColors.otro}`}>
-          {tipoLabels[value] || value}
+        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${EVENTO_TIPO_COLORS[value] || EVENTO_TIPO_COLORS.otro}`}>
+          {EVENTO_TIPO_LABELS[value] || value}
         </span>
       ),
     },

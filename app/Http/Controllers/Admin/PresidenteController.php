@@ -19,12 +19,19 @@ class PresidenteController extends Controller
     public function index(): Response
     {
         $items = Presidente::orderByDesc('es_actual')
-            ->orderByDesc('periodo_inicio')
+            ->orderByDesc('orden')
             ->paginate(config('pandilla.pagination.admin', 15));
+
+        // Datos del último presidente para sugerir defaults al crear uno nuevo
+        $ultimo = Presidente::orderByDesc('orden')->first();
 
         return Inertia::render('Admin/Presidentes/Index', [
             'items' => $items,
             'sectionVisible' => SiteSetting::isSectionVisible('presidentes'),
+            'nextDefaults' => [
+                'orden' => $ultimo ? $ultimo->orden + 1 : 1,
+                'periodo_inicio' => $ultimo?->periodo_fin,
+            ],
         ]);
     }
 
@@ -34,7 +41,7 @@ class PresidenteController extends Controller
             'nombres' => 'required|string|max:255',
             'apellidos' => 'required|string|max:255',
             'foto' => 'nullable|image|max:5120',
-            'periodo_inicio' => 'required|integer|min:1900|max:2100',
+            'periodo_inicio' => 'nullable|integer|min:1900|max:2100',
             'periodo_fin' => 'nullable|integer|min:1900|max:2100',
             'es_actual' => 'boolean',
             'profesion' => 'nullable|string|max:255',
@@ -56,6 +63,11 @@ class PresidenteController extends Controller
             $validated['foto'] = $paths['original'];
         }
 
+        // Auto-asignar orden si no viene o es 0
+        if (empty($validated['orden'])) {
+            $validated['orden'] = (Presidente::max('orden') ?? 0) + 1;
+        }
+
         // Si es actual, desmarcar otros
         if ($validated['es_actual'] ?? false) {
             Presidente::where('es_actual', true)->update(['es_actual' => false]);
@@ -73,7 +85,7 @@ class PresidenteController extends Controller
             'nombres' => 'required|string|max:255',
             'apellidos' => 'required|string|max:255',
             'foto' => 'nullable|image|max:5120',
-            'periodo_inicio' => 'required|integer|min:1900|max:2100',
+            'periodo_inicio' => 'nullable|integer|min:1900|max:2100',
             'periodo_fin' => 'nullable|integer|min:1900|max:2100',
             'es_actual' => 'boolean',
             'profesion' => 'nullable|string|max:255',

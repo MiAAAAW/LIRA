@@ -16,6 +16,10 @@ import { Footer } from '@/Components/layout/Footer';
 // Section Components
 import { Hero } from '@/Components/sections/Hero';
 import { ContentColumns } from '@/Components/sections/ContentColumns';
+import { BackgroundMusicPlayer } from '@/Components/sections/BackgroundMusicPlayer';
+
+// Context
+import { MediaProvider } from '@/contexts/MediaContext';
 
 // CanvasOrbs removido - ahora el Hero usa video de fondo desde CDN
 
@@ -48,6 +52,8 @@ export default function Landing({
   distinciones = [],
   // Anuncio
   comunicadoDestacado = null,
+  // Música de fondo
+  musicConfig = null,
 }) {
   // Config para UI strings y secciones fijas
   const config = landingConfig;
@@ -61,7 +67,7 @@ export default function Landing({
   };
 
   return (
-    <>
+    <MediaProvider>
       {/* SEO Head */}
       <Head title={`${config.site.name} - Patrimonio Cultural`} />
 
@@ -112,6 +118,9 @@ export default function Landing({
         {/* Footer */}
         <Footer config={config.footer} />
       </div>
-    </>
+
+      {/* Background Music Player - floating button */}
+      <BackgroundMusicPlayer musicConfig={musicConfig} />
+    </MediaProvider>
   );
 }

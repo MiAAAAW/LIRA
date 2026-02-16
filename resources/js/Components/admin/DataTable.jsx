@@ -57,6 +57,8 @@ export default function DataTable({
   featuredConfig = null,
   // Hide publish/featured/orden controls for internal-use modules
   hidePublishOptions = false,
+  // Default orden for new records (auto-increment)
+  defaultOrden = null,
 }) {
   const [search, setSearch] = useState('');
   const [deleteItem, setDeleteItem] = useState(null);
@@ -70,7 +72,7 @@ export default function DataTable({
 
   // Build initial form data from fields
   const buildInitialData = (item = null) => {
-    const initial = { is_published: true, is_featured: false, orden: 0 };
+    const initial = { is_published: true, is_featured: false, orden: item ? 0 : (defaultOrden ?? 0) };
     formFields?.forEach((field) => {
       if (field.type === 'checkbox') {
         initial[field.name] = item?.[field.name] ?? false;
@@ -145,7 +147,7 @@ export default function DataTable({
     // Set defaults for new record
     setFormData('is_published', true);
     setFormData('is_featured', false);
-    setFormData('orden', 0);
+    setFormData('orden', defaultOrden ?? 0);
     // Apply field-level defaults (e.g. select defaultValue)
     formFields?.forEach(field => {
       if (field.defaultValue !== undefined) {
@@ -254,7 +256,9 @@ export default function DataTable({
       } else if (typeof value === 'boolean') {
         // Convert boolean to 1/0 for Laravel
         submitData.append(key, value ? '1' : '0');
-      } else if (value !== null && value !== undefined && value !== '') {
+      } else if (value !== null && value !== undefined) {
+        // Send empty strings too — Laravel's ConvertEmptyStringsToNull
+        // middleware converts '' to null for nullable fields
         submitData.append(key, value);
       }
     });
@@ -602,6 +606,10 @@ export default function DataTable({
                       );
                     }
 
+                    // Extract known config keys, pass the rest (min, max, step, suffix, etc.) to FormField
+                    const { name: fName, label: fLabel, type: fType, fullWidth: _fw, defaultValue: _dv, dependsOn: _dep,
+                      uploadType: _ut, keyField: _kf, urlField: _uf, existingUrlField: _euf, existingKeyField: _ekf, ...fieldExtra } = field;
+
                     return (
                       <div key={field.name} className={isFullWidth ? 'sm:col-span-2' : ''}>
                         <FormField
@@ -616,6 +624,7 @@ export default function DataTable({
                           helpText={field.helpText}
                           options={field.options}
                           rows={field.rows}
+                          {...fieldExtra}
                         />
                       </div>
                     );

@@ -31,7 +31,9 @@ export default function AdminSidebar({
 
   const toggleGroup = (groupId) => {
     setExpandedGroups(prev =>
-      prev.includes(groupId) ? [] : [groupId]
+      prev.includes(groupId)
+        ? prev.filter(id => id !== groupId)
+        : [...prev, groupId]
     );
   };
 

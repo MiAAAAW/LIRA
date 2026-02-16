@@ -321,6 +321,20 @@ export const ADMIN_MODULES = [
     color: 'slate',
     fields: ['titulo_principal', 'titulo_highlight', 'subtitulo', 'video_url', 'stats'],
   },
+  {
+    id: 'musicConfig',
+    slug: 'music-config',
+    label: 'Música de Fondo',
+    labelPlural: 'Música de Fondo',
+    description: 'Audio ambiental para el landing page',
+    icon: 'Music2',
+    route: '/admin/music-config',
+    apiEndpoint: null,
+    category: 'landing',
+    order: 16,
+    color: 'rose',
+    fields: ['titulo', 'descripcion', 'audio_url', 'volume', 'loop'],
+  },
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -439,6 +453,23 @@ export const ADMIN_NAVIGATION = {
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// TIPOS DE EVENTO
+// ═══════════════════════════════════════════════════════════════════════════════
+export const EVENTO_TIPO_LABELS = {
+  ensayo: 'Ensayo',
+  reunion: 'Reunión',
+  presentacion: 'Presentación',
+  otro: 'Otro',
+};
+
+export const EVENTO_TIPO_COLORS = {
+  ensayo: 'bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-400',
+  reunion: 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400',
+  presentacion: 'bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-400',
+  otro: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // ESTADOS Y OPCIONES COMUNES
 // ═══════════════════════════════════════════════════════════════════════════════
 export const PUBLISH_STATUS = {
@@ -483,6 +514,8 @@ export default {
   MODULE_CATEGORIES,
   ADMIN_MODULES,
   ADMIN_NAVIGATION,
+  EVENTO_TIPO_LABELS,
+  EVENTO_TIPO_COLORS,
   PUBLISH_STATUS,
   COMMON_ACTIONS,
   TABLE_CONFIG,

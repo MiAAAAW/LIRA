@@ -32,6 +32,7 @@ class CloudflareMediaService
     public const TYPE_DISTINCION = 'documents/distinciones';
     public const TYPE_PUBLICACION = 'documents/publicaciones';
     public const TYPE_HERO = 'hero';
+    public const TYPE_MUSIC = 'music';
 
     /**
      * Verificar si el servicio está configurado
@@ -200,7 +201,7 @@ class CloudflareMediaService
      */
     protected function validateType(string $type): void
     {
-        $validTypes = [self::TYPE_VIDEO, self::TYPE_AUDIO, self::TYPE_THUMBNAIL, self::TYPE_DOCUMENT, self::TYPE_DISTINCION, self::TYPE_PUBLICACION, self::TYPE_HERO];
+        $validTypes = [self::TYPE_VIDEO, self::TYPE_AUDIO, self::TYPE_THUMBNAIL, self::TYPE_DOCUMENT, self::TYPE_DISTINCION, self::TYPE_PUBLICACION, self::TYPE_HERO, self::TYPE_MUSIC];
 
         if (!in_array($type, $validTypes)) {
             throw new \InvalidArgumentException(

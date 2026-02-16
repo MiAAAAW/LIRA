@@ -11,6 +11,7 @@ import {
   Play, Pause, Download, Calendar, User, FileIcon, GripVertical,
   ChevronLeft, ChevronRight, ExternalLink, Volume2, VolumeX, Loader2
 } from 'lucide-react';
+import { useMediaContext, useVideoContext } from '@/contexts/MediaContext';
 import { cn, storageUrl } from '@/lib/utils';
 import { Badge } from '@/Components/ui/badge';
 import { Button } from '@/Components/ui/button';
@@ -301,61 +302,8 @@ const DocumentViewer = React.memo(function DocumentViewer({ documents, icon: Ico
   );
 });
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// MEDIA CONTEXT - Coordina que solo 1 media (video O audio) se reproduzca a la vez
-// ═══════════════════════════════════════════════════════════════════════════════
-
-const MediaContext = React.createContext({
-  activeMediaId: null,
-  activeMediaType: null, // 'video' | 'audio'
-  setActiveMedia: () => {},
-  modalOpen: false,
-  setModalOpen: () => {},
-});
-
-const MediaProvider = ({ children }) => {
-  const [activeMediaId, setActiveMediaId] = React.useState(null);
-  const [activeMediaType, setActiveMediaType] = React.useState(null);
-  const [modalOpen, setModalOpen] = React.useState(false);
-
-  const setActiveMedia = React.useCallback((id, type) => {
-    setActiveMediaId(id);
-    setActiveMediaType(type);
-  }, []);
-
-  const value = React.useMemo(() => ({
-    activeMediaId,
-    activeMediaType,
-    setActiveMedia,
-    modalOpen,
-    setModalOpen,
-  }), [activeMediaId, activeMediaType, setActiveMedia, modalOpen]);
-
-  return (
-    <MediaContext.Provider value={value}>
-      {children}
-    </MediaContext.Provider>
-  );
-};
-
-const useMediaContext = () => React.useContext(MediaContext);
-
-// Hook para videos - pausa cuando ANY media está activo
-const useVideoContext = () => {
-  const ctx = useMediaContext();
-  const videoId = ctx.activeMediaType === 'video' ? ctx.activeMediaId : null;
-  return {
-    // Return actual activeMediaId so videos know when ANY media is playing (including audio)
-    activeVideoId: ctx.activeMediaId,
-    // But track if THIS is a video
-    isVideoActive: ctx.activeMediaType === 'video',
-    setActiveVideo: (id) => ctx.setActiveMedia(id, 'video'),
-    modalOpen: ctx.modalOpen,
-    setModalOpen: ctx.setModalOpen,
-    // Expose raw context for advanced checks
-    activeMediaType: ctx.activeMediaType,
-  };
-};
+// MediaContext, MediaProvider, useMediaContext, useVideoContext
+// → Moved to @/contexts/MediaContext.jsx for shared use with BackgroundMusicPlayer
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // VIDEO MODAL CAROUSEL - Fullscreen modal con navegación entre videos
@@ -638,12 +586,17 @@ const VideoCard = React.memo(function VideoCard({ video, onOpenFullscreen }) {
     return () => observer.disconnect();
   }, [canPlayInline, isPlaying, modalOpen, video.id, setActiveVideo, isThisActive, isAudioPlaying, userPaused]);
 
-  // Toggle mute
+  // Toggle mute — also notify MediaContext about audibility
   const toggleMute = (e) => {
     e.stopPropagation();
     if (videoRef.current) {
-      videoRef.current.muted = !isMuted;
-      setIsMuted(!isMuted);
+      const newMuted = !isMuted;
+      videoRef.current.muted = newMuted;
+      setIsMuted(newMuted);
+      // When unmuting, signal that this video now has audible sound
+      if (isThisActive) {
+        setActiveVideo(video.id, !newMuted);
+      }
     }
   };
 
@@ -1035,7 +988,7 @@ const AudioCard = React.memo(function AudioCard({ audio }) {
       audioRef.current.pause();
       setActiveMedia(null, null);
     } else {
-      setActiveMedia(audioId, 'audio'); // Esto pausará otros medios
+      setActiveMedia(audioId, 'audio', true); // Audible — pausará música de fondo
       audioRef.current.play().catch(() => {});
     }
   };
@@ -1521,16 +1474,14 @@ const EstandartesCarousel = React.memo(function EstandartesCarousel({ items }) {
 const PresidenteTimeline = React.memo(function PresidenteTimeline({ members }) {
   if (!members || members.length === 0) return null;
 
-  // Ordenar: actual primero, luego por año de inicio (más reciente primero)
+  // Ordenar: actual primero, luego más reciente arriba, fundadores al fondo
   const sortedMembers = React.useMemo(() => {
     return [...members].sort((a, b) => {
       // Actual siempre primero
       if (a.isCurrent && !b.isCurrent) return -1;
       if (!a.isCurrent && b.isCurrent) return 1;
-      // Luego por año (más reciente primero)
-      const yearA = a.yearStart || parseInt(a.period?.split('-')[0]?.trim()) || 0;
-      const yearB = b.yearStart || parseInt(b.period?.split('-')[0]?.trim()) || 0;
-      return yearB - yearA;
+      // Luego por orden descendente (más reciente arriba, fundadores al fondo)
+      return (b.orden ?? 0) - (a.orden ?? 0);
     });
   }, [members]);
 
@@ -1588,7 +1539,7 @@ const PresidenteTimeline = React.memo(function PresidenteTimeline({ members }) {
                       className="w-full h-full rounded-full object-cover"
                     />
                   ) : (
-                    getInitials(member.name)
+                    getInitials(member.initials || member.name)
                   )}
                 </div>
 
@@ -2315,7 +2266,7 @@ export function ContentColumns({
   }, []);
 
   return (
-    <MediaProvider>
+    <>
       <section id="contenido" className={cn("pt-20 md:pt-28 pb-8 md:pb-12", className)}>
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
@@ -2353,7 +2304,7 @@ export function ContentColumns({
 
       {/* Modal de anuncio - comunicado destacado */}
       <AnnouncementModal item={comunicadoDestacado} />
-    </MediaProvider>
+    </>
   );
 }
 

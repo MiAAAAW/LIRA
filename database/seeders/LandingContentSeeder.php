@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\Comunicado;
-use App\Models\Presidente;
 use App\Models\Publicacion;
 use App\Models\Video;
 use App\Models\Audio;
@@ -78,62 +77,8 @@ class LandingContentSeeder extends Seeder
         ]);
 
         // =====================================================
-        // PRESIDENTES
+        // PRESIDENTES — Movidos a PresidentesSeeder (34 reales)
         // =====================================================
-        Presidente::create([
-            'nombres' => 'Juan Carlos',
-            'apellidos' => 'Mamani Quispe',
-            'foto' => null,
-            'periodo_inicio' => '2022',
-            'periodo_fin' => null,
-            'es_actual' => true,
-            'profesion' => 'Ingeniero Civil',
-            'biografia' => 'Actual presidente del Conjunto Pandillero Lira Puno. Lidera la institución desde 2022, promoviendo la difusión de la pandilla puneña a nivel nacional e internacional.',
-            'email' => 'presidente@lirapuno.pe',
-            'is_published' => true,
-            'is_featured' => true,
-            'orden' => 1,
-        ]);
-
-        Presidente::create([
-            'nombres' => 'María Elena',
-            'apellidos' => 'Flores Condori',
-            'foto' => null,
-            'periodo_inicio' => '2018',
-            'periodo_fin' => '2022',
-            'es_actual' => false,
-            'profesion' => 'Docente Universitaria',
-            'biografia' => 'Ex presidenta que logró importantes reconocimientos para la institución durante su gestión.',
-            'email' => null,
-            'is_published' => true,
-            'orden' => 2,
-        ]);
-
-        Presidente::create([
-            'nombres' => 'Roberto',
-            'apellidos' => 'Choque Apaza',
-            'foto' => null,
-            'periodo_inicio' => '2014',
-            'periodo_fin' => '2018',
-            'es_actual' => false,
-            'profesion' => 'Abogado',
-            'biografia' => 'Impulsó la campaña para declarar a la pandilla puneña patrimonio de la humanidad.',
-            'is_published' => true,
-            'orden' => 3,
-        ]);
-
-        Presidente::create([
-            'nombres' => 'Ana Lucía',
-            'apellidos' => 'Pari Huanca',
-            'foto' => null,
-            'periodo_inicio' => '2010',
-            'periodo_fin' => '2014',
-            'es_actual' => false,
-            'profesion' => 'Contadora',
-            'biografia' => 'Primera mujer en presidir el conjunto, modernizó la gestión institucional.',
-            'is_published' => true,
-            'orden' => 4,
-        ]);
 
         // =====================================================
         // COMUNICADOS (Noticias)
@@ -301,7 +246,7 @@ class LandingContentSeeder extends Seeder
         $this->command->info('- Ley 24325: ' . Ley24325::count());
         $this->command->info('- Base Legal: ' . BaseLegal::count());
         $this->command->info('- INDECOPI: ' . RegistroIndecopi::count());
-        $this->command->info('- Presidentes: ' . Presidente::count());
+        $this->command->info('- Presidentes: (see PresidentesSeeder)');
         $this->command->info('- Comunicados: ' . Comunicado::count());
         $this->command->info('- Publicaciones: ' . Publicacion::count());
         $this->command->info('- Videos: ' . Video::count());

@@ -3,23 +3,16 @@ import AdminLayout from '@/Layouts/AdminLayout';
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { Input } from '@/Components/ui/input';
 import { Button } from '@/Components/ui/button';
-import { Badge } from '@/Components/ui/badge';
 import { Card, CardContent } from '@/Components/ui/card';
 import DynamicIcon from '@/Components/DynamicIcon';
+import { EVENTO_TIPO_LABELS } from '@/lib/admin-constants';
 import axios from 'axios';
 
 const ESTADOS = {
-  presente: { label: 'P', icon: 'Check', color: 'bg-green-500 hover:bg-green-600 text-white', activeRing: 'ring-2 ring-green-300' },
-  ausente: { label: 'A', icon: 'X', color: 'bg-red-500 hover:bg-red-600 text-white', activeRing: 'ring-2 ring-red-300' },
-  tardanza: { label: 'T', icon: 'Clock', color: 'bg-amber-500 hover:bg-amber-600 text-white', activeRing: 'ring-2 ring-amber-300' },
-  justificado: { label: 'J', icon: 'FileCheck', color: 'bg-blue-500 hover:bg-blue-600 text-white', activeRing: 'ring-2 ring-blue-300' },
-};
-
-const tipoLabels = {
-  ensayo: 'Ensayo',
-  reunion: 'Reunión',
-  presentacion: 'Presentación',
-  otro: 'Otro',
+  presente: { label: 'P', color: 'bg-green-500 hover:bg-green-600 text-white', activeRing: 'ring-2 ring-green-300' },
+  ausente: { label: 'A', color: 'bg-red-500 hover:bg-red-600 text-white', activeRing: 'ring-2 ring-red-300' },
+  tardanza: { label: 'T', color: 'bg-amber-500 hover:bg-amber-600 text-white', activeRing: 'ring-2 ring-amber-300' },
+  justificado: { label: 'J', color: 'bg-blue-500 hover:bg-blue-600 text-white', activeRing: 'ring-2 ring-blue-300' },
 };
 
 export function AsistenciaContent({ evento, initialMiembros, initialAsistencias, onClose }) {
@@ -186,7 +179,7 @@ export function AsistenciaContent({ evento, initialMiembros, initialAsistencias,
                 </h1>
               </div>
               <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-gray-500">
-                <span className="capitalize">{tipoLabels[evento.tipo] || evento.tipo}</span>
+                <span className="capitalize">{EVENTO_TIPO_LABELS[evento.tipo] || evento.tipo}</span>
                 <span>·</span>
                 <span className="capitalize">{fechaFormatted}</span>
                 {evento.hora_inicio && (

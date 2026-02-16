@@ -424,6 +424,17 @@ return [
                 'image/webp',
             ],
         ],
+
+        'music' => [
+            'max_size' => 500 * 1024 * 1024, // 500MB
+            'mime_types' => [
+                'audio/mpeg',
+                'audio/wav',
+                'audio/ogg',
+                'audio/mp4',
+                'audio/x-m4a',
+            ],
+        ],
     ],
 
     /*

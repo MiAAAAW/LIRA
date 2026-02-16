@@ -1,6 +1,7 @@
 import { cn } from '@/lib/utils';
 import { Input } from '@/Components/ui/input';
 import { Textarea } from '@/Components/ui/textarea';
+import { Slider } from '@/Components/ui/slider';
 import DynamicIcon from '@/Components/DynamicIcon';
 
 export default function FormField({
@@ -78,6 +79,59 @@ export default function FormField({
           </select>
         );
 
+      case 'combobox':
+        return (
+          <div className="space-y-1.5">
+            <div className="relative">
+              <Input
+                id={id}
+                name={name}
+                type="text"
+                autoComplete="off"
+                value={value || ''}
+                onChange={handleChange}
+                placeholder={placeholder}
+                disabled={disabled}
+                className={cn(
+                  value && 'pr-8',
+                  error && 'border-red-500 focus:ring-red-500',
+                  inputClassName
+                )}
+                {...props}
+              />
+              {value && (
+                <button
+                  type="button"
+                  onClick={() => onChange(name, '')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  tabIndex={-1}
+                >
+                  <DynamicIcon name="X" className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+            {options.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {options.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => onChange(name, value === opt.value ? '' : opt.value)}
+                    className={cn(
+                      "px-2 py-0.5 text-xs rounded-md border transition-colors",
+                      value === opt.value
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-muted/50 text-muted-foreground border-border hover:bg-muted hover:text-foreground"
+                    )}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+
       case 'checkbox':
         return (
           <div className="flex items-center gap-2">
@@ -145,6 +199,25 @@ export default function FormField({
             )}
             {...props}
           />
+        );
+
+      case 'range':
+        return (
+          <div className="flex items-center gap-3">
+            <Slider
+              id={id}
+              value={[Number(value) || props.min || 0]}
+              onValueChange={([v]) => onChange(name, v)}
+              min={props.min ?? 0}
+              max={props.max ?? 100}
+              step={props.step ?? 1}
+              disabled={disabled}
+              className="flex-1"
+            />
+            <span className="text-sm font-medium tabular-nums text-muted-foreground w-10 text-right">
+              {Number(value) || props.min || 0}{props.suffix || '%'}
+            </span>
+          </div>
         );
 
       case 'number':

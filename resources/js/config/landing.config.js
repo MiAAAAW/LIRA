@@ -127,7 +127,8 @@ export const landingConfig = {
       { text: "Admin", href: "/admin" },
     ],
     social: {
-      facebook: "#",
+      tiktok: "https://www.tiktok.com/@pandillalirapuno",
+      facebook: "https://www.facebook.com/profile.php?id=61587073049404",
       instagram: "#",
       youtube: "#",
     },

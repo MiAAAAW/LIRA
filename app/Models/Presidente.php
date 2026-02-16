@@ -44,15 +44,29 @@ class Presidente extends Model
         'thumbnail_url',
         'webp_url',
         'nombre_completo',
+        'nombre_con_titulo',
         'periodo',
     ];
 
     /**
-     * Obtener nombre completo
+     * Obtener nombre completo (sin título)
      */
     public function getNombreCompletoAttribute(): string
     {
-        return "{$this->nombres} {$this->apellidos}";
+        return trim("{$this->nombres} {$this->apellidos}");
+    }
+
+    /**
+     * Obtener nombre con título/profesión antepuesto
+     * Ej: "Dr. Hugo Barriga Rivera", "Prof. Soledad Loza Huarachi"
+     */
+    public function getNombreConTituloAttribute(): string
+    {
+        $nombre = $this->nombre_completo;
+
+        return $this->profesion
+            ? "{$this->profesion} {$nombre}"
+            : $nombre;
     }
 
     /**
@@ -60,8 +74,17 @@ class Presidente extends Model
      */
     public function getPeriodoAttribute(): string
     {
-        $fin = $this->periodo_fin ?? 'Presente';
-        return "{$this->periodo_inicio} - {$fin}";
+        if (!$this->periodo_inicio) {
+            return 'Periodo fundacional';
+        }
+
+        if ($this->periodo_fin) {
+            return "{$this->periodo_inicio} - {$this->periodo_fin}";
+        }
+
+        return $this->es_actual
+            ? "{$this->periodo_inicio} - Presente"
+            : (string) $this->periodo_inicio;
     }
 
     /**

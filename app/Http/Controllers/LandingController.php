@@ -8,6 +8,7 @@ use App\Models\Comunicado;
 use App\Models\Distincion;
 use App\Models\Estandarte;
 use App\Models\HeroConfig;
+use App\Models\MusicConfig;
 use App\Models\Ley24325;
 use App\Models\Presidente;
 use App\Models\Publicacion;
@@ -38,6 +39,8 @@ class LandingController extends Controller
             'cdnUrl' => $cdnUrl,
             // Hero dinámico desde BD
             'heroData' => $heroConfig?->toHeroConfig(),
+            // Música de fondo activa
+            'musicConfig' => MusicConfig::getActive()?->toMusicConfig(),
             // ==========================================
             // MARCO LEGAL
             // ==========================================
@@ -143,14 +146,16 @@ class LandingController extends Controller
             ->get()
             ->map(fn($p) => [
                 'id' => (string) $p->id,
-                'name' => $p->nombre_completo,
+                'name' => $p->nombre_con_titulo,
+                'initials' => $p->nombre_completo,
                 'role' => $p->es_actual ? 'Presidente Actual' : 'Ex Presidente',
                 'avatar' => $p->foto ? asset('storage/' . $p->foto) : null,
                 'bio' => $p->biografia,
                 'period' => $p->periodo,
-                'yearStart' => (int) $p->periodo_inicio,
+                'yearStart' => $p->periodo_inicio ? (int) $p->periodo_inicio : null,
                 'yearEnd' => $p->periodo_fin ? (int) $p->periodo_fin : null,
                 'isCurrent' => (bool) $p->es_actual,
+                'orden' => $p->orden,
                 'social' => [
                     'email' => $p->email,
                 ],

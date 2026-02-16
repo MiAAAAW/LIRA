@@ -87,6 +87,12 @@ export default function DirectUpload({
       icon: 'Monitor',
       label: 'video o imagen',
     },
+    music: {
+      accept: accept || 'audio/mpeg,audio/wav,audio/ogg,audio/mp4',
+      maxSize: maxSize || 500 * 1024 * 1024, // 500MB
+      icon: 'Music2',
+      label: 'archivo de audio',
+    },
   };
 
   // Tipo base para matching: 'documents/publicaciones' → 'documents'
@@ -373,7 +379,7 @@ export default function DirectUpload({
                   const url = existingFile.url || '';
                   const ext = url.split('?')[0].split('.').pop()?.toLowerCase();
                   const isVideo = baseType === 'videos' || (baseType === 'hero' && ['mp4', 'webm', 'mov'].includes(ext));
-                  const isAudio = baseType === 'audios';
+                  const isAudio = baseType === 'audios' || baseType === 'music';
                   const isDocument = baseType === 'documents';
 
                   if (isVideo) return (

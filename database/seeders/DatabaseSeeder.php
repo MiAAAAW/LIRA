@@ -35,6 +35,9 @@ class DatabaseSeeder extends Seeder
         );
 
         // Landing Content
-        $this->call(LandingContentSeeder::class);
+        $this->call([
+            LandingContentSeeder::class,
+            PresidentesSeeder::class,
+        ]);
     }
 }

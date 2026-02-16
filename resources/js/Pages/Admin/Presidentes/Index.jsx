@@ -3,18 +3,17 @@ import AdminLayout from '@/Layouts/AdminLayout';
 import DataTable from '@/Components/admin/DataTable';
 import { Badge } from '@/Components/ui/badge';
 
-export default function Index({ items, sectionVisible }) {
+export default function Index({ items, sectionVisible, nextDefaults }) {
   const columns = [
     { key: 'foto', label: 'Foto', type: 'image' },
     {
       key: 'nombres',
       label: 'Nombre Completo',
-      render: (_, item) => `${item.nombres} ${item.apellidos}`,
+      render: (_, item) => item.nombre_con_titulo,
     },
     {
       key: 'periodo',
       label: 'Periodo',
-      render: (_, item) => `${item.periodo_inicio} - ${item.periodo_fin || 'Presente'}`,
     },
     {
       key: 'es_actual',
@@ -24,12 +23,44 @@ export default function Index({ items, sectionVisible }) {
     { key: 'is_published', label: 'Estado', type: 'badge' },
   ];
 
+  // Defaults inteligentes basados en el último presidente registrado
+  const suggestedStart = nextDefaults?.periodo_inicio;
+  const suggestedOrden = nextDefaults?.orden;
+
   const formFields = [
+    {
+      name: 'profesion',
+      label: 'Título',
+      type: 'combobox',
+      placeholder: 'Ej: Dr., Ing., Prof.',
+      options: [
+        { value: 'Sr.', label: 'Sr.' },
+        { value: 'Sra.', label: 'Sra.' },
+        { value: 'Dr.', label: 'Dr.' },
+        { value: 'Prof.', label: 'Prof.' },
+        { value: 'Ing.', label: 'Ing.' },
+        { value: 'CPC', label: 'CPC' },
+        { value: 'Lic.', label: 'Lic.' },
+        { value: 'Abog.', label: 'Abog.' },
+        { value: 'Mg.', label: 'Mg.' },
+        { value: 'Bach.', label: 'Bach.' },
+      ],
+    },
     { name: 'nombres', label: 'Nombres', required: true },
     { name: 'apellidos', label: 'Apellidos', required: true },
-    { name: 'periodo_inicio', label: 'Año Inicio', type: 'number', required: true, placeholder: '2020' },
-    { name: 'periodo_fin', label: 'Año Fin', type: 'number', placeholder: 'Vacío si es actual' },
-    { name: 'profesion', label: 'Profesión', fullWidth: true },
+    {
+      name: 'periodo_inicio',
+      label: 'Año Inicio',
+      type: 'number',
+      defaultValue: suggestedStart || '',
+      placeholder: suggestedStart ? `Sugerido: ${suggestedStart}` : 'Ej: 2027',
+    },
+    {
+      name: 'periodo_fin',
+      label: 'Año Fin',
+      type: 'number',
+      placeholder: 'Vacío si es actual',
+    },
     { name: 'email', label: 'Email', type: 'email' },
     { name: 'telefono', label: 'Teléfono' },
     { name: 'es_actual', label: 'Es Presidente Actual', type: 'checkbox', fullWidth: true },
@@ -59,7 +90,12 @@ export default function Index({ items, sectionVisible }) {
         updateRoute="/admin/presidentes/:id"
         modalTitleCreate="Nuevo Presidente"
         modalTitleEdit="Editar Presidente"
-        modalDescription="Complete los datos del presidente. Solo uno puede ser 'Actual'."
+        modalDescription={
+          suggestedStart
+            ? `Último periodo termina en ${suggestedStart}. Año inicio se pre-llena.`
+            : 'Complete los datos del presidente. Solo uno puede ser "Actual".'
+        }
+        defaultOrden={suggestedOrden}
       />
     </AdminLayout>
   );
