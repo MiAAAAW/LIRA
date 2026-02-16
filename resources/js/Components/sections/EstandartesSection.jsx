@@ -10,7 +10,7 @@ import { Card, CardContent } from '@/Components/ui/card';
 import { MotionWrapper, StaggerContainer, StaggerItem } from '@/Components/motion/MotionWrapper';
 
 function EstandarteCard({ item }) {
-  const imageUrl = storageUrl(item.imagen_principal);
+  const imageUrl = item.image_url || storageUrl(item.imagen_principal);
   return (
     <Card className="overflow-hidden border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-lg group">
       <div className="relative h-64 bg-muted">

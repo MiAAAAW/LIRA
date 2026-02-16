@@ -39,7 +39,7 @@ function formatDate(dateString) {
 }
 
 function PublicacionCard({ item, onClick }) {
-  const imageUrl = storageUrl(item.imagen_portada);
+  const imageUrl = item.image_url || storageUrl(item.imagen_portada);
   return (
     <Card
       className="h-full border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-lg group cursor-pointer"
@@ -94,7 +94,7 @@ function PublicacionCard({ item, onClick }) {
 function PublicacionModal({ item, open, onOpenChange }) {
   if (!item) return null;
 
-  const imageUrl = storageUrl(item.imagen_portada);
+  const imageUrl = item.image_url || storageUrl(item.imagen_portada);
   const pdfUrl = item.pdf_url || item.documento_pdf;
   const externalUrl = item.enlace_externo;
 

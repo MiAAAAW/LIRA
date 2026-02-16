@@ -20,9 +20,9 @@ function VideoCard({ video }) {
   return (
     <Card className="overflow-hidden border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-lg group">
       <div className="relative aspect-video bg-muted">
-        {video.thumbnail ? (
+        {(video.thumbnail_url || video.thumbnail) ? (
           <img
-            src={video.thumbnail}
+            src={video.thumbnail_url || video.thumbnail}
             alt={video.titulo}
             className="w-full h-full object-cover"
           />
@@ -32,7 +32,7 @@ function VideoCard({ video }) {
           </div>
         )}
         <a
-          href={video.url_video}
+          href={video.playable_url || video.url_video}
           target="_blank"
           rel="noopener noreferrer"
           className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -106,9 +106,9 @@ function AudioCard({ audio }) {
                 </Badge>
               )}
             </div>
-            {audio.url_audio && (
+            {(audio.playable_url || audio.url_audio) && (
               <Button variant="link" size="sm" className="mt-2 p-0 h-auto" asChild>
-                <a href={audio.url_audio} target="_blank" rel="noopener noreferrer">
+                <a href={audio.playable_url || audio.url_audio} target="_blank" rel="noopener noreferrer">
                   Escuchar <ExternalLink className="ml-1 h-3 w-3" />
                 </a>
               </Button>

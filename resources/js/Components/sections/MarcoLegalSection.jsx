@@ -22,7 +22,7 @@ const iconMap = {
  */
 function ContentCard({ item, type, icon: Icon }) {
   // INDECOPI usa certificado_pdf, los demás usan documento_pdf
-  const pdfUrl = item.documento_pdf || item.certificado_pdf;
+  const pdfUrl = item.pdf_url || item.documento_pdf || item.certificado_pdf;
   const hasPdf = !!pdfUrl;
 
   return (

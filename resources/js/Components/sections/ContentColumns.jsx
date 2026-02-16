@@ -103,7 +103,7 @@ const PDFFullscreenModal = React.memo(function PDFFullscreenModal({
 
   if (!doc) return null;
 
-  const pdfUrl = doc.documento_pdf || doc.certificado_pdf;
+  const pdfUrl = doc.pdf_url || doc.documento_pdf || doc.certificado_pdf;
   const numero = doc.numero_ley || doc.numero_documento || doc.numero_registro;
 
   return (
@@ -185,7 +185,7 @@ const DocumentViewer = React.memo(function DocumentViewer({ documents, icon: Ico
   if (!documents || documents.length === 0) return null;
 
   const activeDoc = documents[activeIndex];
-  const pdfUrl = activeDoc?.documento_pdf || activeDoc?.certificado_pdf;
+  const pdfUrl = activeDoc?.pdf_url || activeDoc?.documento_pdf || activeDoc?.certificado_pdf;
   const hasPdf = !!pdfUrl;
   const numero = activeDoc?.numero_ley || activeDoc?.numero_documento || activeDoc?.numero_registro;
 
@@ -1332,7 +1332,7 @@ const DistincionesList = React.memo(function DistincionesList({ items }) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const EstandarteCard = React.memo(function EstandarteCard({ item, onClick }) {
-  const imageUrl = storageUrl(item.imagen_principal);
+  const imageUrl = item.image_url || storageUrl(item.imagen_principal);
   return (
     <Card
       className="overflow-hidden border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-lg group cursor-pointer"
@@ -1405,7 +1405,7 @@ const EstandartesCarousel = React.memo(function EstandartesCarousel({ items }) {
 
   // Prepare images for lightbox
   const lightboxImages = items.map(item => ({
-    src: storageUrl(item.imagen_principal),
+    src: item.image_url || storageUrl(item.imagen_principal),
     alt: item.titulo,
     title: item.titulo,
     description: item.descripcion,
@@ -1591,7 +1591,7 @@ const PresidenteTimeline = React.memo(function PresidenteTimeline({ members }) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const PublicacionCard = React.memo(function PublicacionCard({ item, onClick }) {
-  const imageUrl = storageUrl(item.imagen_portada);
+  const imageUrl = item.image_url || storageUrl(item.imagen_portada);
   const hasPdf = !!(item.pdf_url || item.documento_pdf || item.enlace_externo);
   return (
     <Card
@@ -1646,7 +1646,7 @@ const PublicacionPdfModal = React.memo(function PublicacionPdfModal({ item, isOp
 
   if (!item) return null;
 
-  const imageUrl = storageUrl(item.imagen_portada);
+  const imageUrl = item.image_url || storageUrl(item.imagen_portada);
   const pdfUrl = item.pdf_url || item.documento_pdf;
   const externalUrl = item.enlace_externo;
 
@@ -1871,7 +1871,7 @@ const ComunicadoCard = React.memo(function ComunicadoCard({ item, onClick }) {
 const ComunicadoModal = React.memo(function ComunicadoModal({ item, isOpen, onClose }) {
   if (!item) return null;
 
-  const imageUrl = item.imagen ? storageUrl(item.imagen) : null;
+  const imageUrl = item.image_url || (item.imagen ? storageUrl(item.imagen) : null);
   const hasImage = !!imageUrl;
 
   return (
