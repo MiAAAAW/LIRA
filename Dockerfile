@@ -23,10 +23,11 @@ RUN apk add --no-cache \
     unzip \
     oniguruma-dev \
     sqlite-dev \
-    linux-headers 
+    postgresql-dev \
+    linux-headers
 
 # Compilamos TODAS las extensiones necesarias UNA SOLA VEZ
-RUN docker-php-ext-install pdo pdo_mysql pdo_sqlite mbstring exif pcntl bcmath gd opcache
+RUN docker-php-ext-install pdo pdo_mysql pdo_sqlite pdo_pgsql mbstring exif pcntl bcmath gd opcache
 
 # Instalamos Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -50,6 +51,7 @@ RUN apk add --no-cache \
     libpng \
     oniguruma \
     sqlite-libs \
+    libpq \
     curl
 
 # TRUCO MAESTRO: Copiamos las extensiones ya compiladas desde el builder

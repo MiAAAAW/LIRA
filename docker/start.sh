@@ -17,14 +17,20 @@ touch /var/log/nginx/error.log
 chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/log/supervisor /var/log/nginx
 chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# 3. BASE DE DATOS SQLITE
-# Solo la creamos si no existe
-if [ ! -f /var/www/html/database/database.sqlite ]; then
-    echo "📦 Creating SQLite database..."
-    touch /var/www/html/database/database.sqlite
-    chown www-data:www-data /var/www/html/database/database.sqlite
-    chmod 664 /var/www/html/database/database.sqlite
-fi
+# 3. ESPERAR A QUE POSTGRES ESTÉ LISTO
+echo "🐘 Waiting for PostgreSQL..."
+MAX_RETRIES=30
+RETRY=0
+until php -r "new PDO('pgsql:host='.getenv('DB_HOST').';port='.getenv('DB_PORT').';dbname='.getenv('DB_DATABASE'), getenv('DB_USERNAME'), getenv('DB_PASSWORD'));" 2>/dev/null; do
+    RETRY=$((RETRY + 1))
+    if [ $RETRY -ge $MAX_RETRIES ]; then
+        echo "❌ Could not connect to PostgreSQL after $MAX_RETRIES attempts"
+        exit 1
+    fi
+    echo "⏳ PostgreSQL not ready yet... retry $RETRY/$MAX_RETRIES"
+    sleep 2
+done
+echo "✅ PostgreSQL is ready!"
 
 # 4. CACHE DE PRODUCCIÓN
 echo "⚡ Caching configuration..."
