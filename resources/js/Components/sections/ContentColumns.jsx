@@ -161,6 +161,14 @@ const DocumentViewer = React.memo(function DocumentViewer({ documents, icon: Ico
   const [activeIndex, setActiveIndex] = React.useState(0);
   const [isLoading, setIsLoading] = React.useState(true);
   const [isFullscreen, setIsFullscreen] = React.useState(false);
+  const [isMobile, setIsMobile] = React.useState(false);
+
+  React.useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const totalDocs = documents?.length || 0;
 
@@ -235,24 +243,44 @@ const DocumentViewer = React.memo(function DocumentViewer({ documents, icon: Ico
         </div>
 
         {/* PREVIEW DEL PDF - Visible como "hoja" */}
-        <div className="relative bg-muted/10" style={{ height: PDF_PREVIEW_HEIGHT }}>
+        <div className="relative bg-muted/10 h-[500px] sm:h-[500px] md:h-[600px]">
           {hasPdf ? (
-            <>
-              {isLoading && (
-                <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/90">
-                  <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            isMobile ? (
+              // En mobile: botón para abrir PDF (iframes no funcionan bien)
+              <div className="h-full flex flex-col items-center justify-center gap-4 p-6">
+                <div className="p-4 rounded-full bg-primary/10">
+                  <FileIcon className="h-12 w-12 text-primary" />
                 </div>
-              )}
-              <iframe
-                key={activeDoc.id}
-                src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`}
-                className="w-full h-full border-0"
-                title={`PDF: ${activeDoc.titulo}`}
-                style={{ colorScheme: 'light' }}
-                loading="lazy"
-                onLoad={() => setIsLoading(false)}
-              />
-            </>
+                <div className="text-center">
+                  <p className="text-sm font-medium mb-1">{activeDoc.titulo}</p>
+                  <p className="text-xs text-muted-foreground line-clamp-2">{activeDoc.descripcion}</p>
+                </div>
+                <Button asChild className="mt-2">
+                  <a href={pdfUrl} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Ver PDF
+                  </a>
+                </Button>
+              </div>
+            ) : (
+              // En desktop: iframe normal
+              <>
+                {isLoading && (
+                  <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/90">
+                    <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  </div>
+                )}
+                <iframe
+                  key={activeDoc.id}
+                  src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`}
+                  className="w-full h-full border-0"
+                  title={`PDF: ${activeDoc.titulo}`}
+                  style={{ colorScheme: 'light' }}
+                  loading="lazy"
+                  onLoad={() => setIsLoading(false)}
+                />
+              </>
+            )
           ) : (
             <div className="h-full flex items-center justify-center">
               <div className="text-center text-muted-foreground">
@@ -1977,15 +2005,11 @@ const ComunicadosList = React.memo(function ComunicadosList({ items }) {
 // ANNOUNCEMENT MODAL - Modal de anuncio al entrar a la página (1 comunicado destacado)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const ANNOUNCEMENT_KEY = 'announcement_seen_';
-
 function AnnouncementModal({ item }) {
   const [open, setOpen] = React.useState(false);
 
   React.useEffect(() => {
     if (!item) return;
-    const key = ANNOUNCEMENT_KEY + item.id;
-    if (sessionStorage.getItem(key)) return;
     // Pequeño delay para que no aparezca instantáneamente
     const timer = setTimeout(() => setOpen(true), 800);
     return () => clearTimeout(timer);
@@ -1993,8 +2017,7 @@ function AnnouncementModal({ item }) {
 
   const handleClose = React.useCallback(() => {
     setOpen(false);
-    if (item) sessionStorage.setItem(ANNOUNCEMENT_KEY + item.id, '1');
-  }, [item]);
+  }, []);
 
   if (!item) return null;
 
