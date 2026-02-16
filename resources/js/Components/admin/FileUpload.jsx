@@ -139,27 +139,24 @@ export default function FileUpload({
           onDrop={handleDrop}
           onClick={() => inputRef.current?.click()}
           className={cn(
-            "flex flex-col items-center justify-center gap-2 p-6 border-2 border-dashed rounded-lg cursor-pointer transition-colors",
+            "flex items-center gap-3 p-3 border-2 border-dashed rounded-lg cursor-pointer transition-colors",
             dragActive
               ? "border-primary bg-primary/5"
               : "border-gray-300 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-600",
             error && "border-red-500"
           )}
         >
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
-            <DynamicIcon name="Upload" className="h-6 w-6 text-gray-500" />
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
+            <DynamicIcon name="Upload" className="h-4 w-4 text-gray-500" />
           </div>
-          <div className="text-center">
+          <div>
             <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Arrastra un archivo aquí
+              Arrastra o haz clic para seleccionar
             </p>
-            <p className="text-xs text-gray-500">
-              o haz clic para seleccionar
+            <p className="text-xs text-gray-400">
+              Máximo {formatFileSize(effectiveMaxSize)}
             </p>
           </div>
-          <p className="text-xs text-gray-400">
-            Máximo {formatFileSize(effectiveMaxSize)}
-          </p>
         </div>
       )}
 

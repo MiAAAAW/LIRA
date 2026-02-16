@@ -36,6 +36,11 @@ export const ICONS = {
   distinciones: 'Award',
   publicaciones: 'Newspaper',
   comunicados: 'Megaphone',
+  // Miembros y Asistencia
+  miembros: 'UserPlus',
+  eventos: 'Calendar',
+  sanciones: 'AlertTriangle',
+  reportes: 'BarChart3',
   // UI
   dashboard: 'LayoutDashboard',
   settings: 'Settings',
@@ -70,6 +75,20 @@ export const MODULE_CATEGORIES = {
     description: 'Videos, audios, publicaciones y comunicados oficiales',
     icon: 'PlayCircle',
     color: 'purple',
+  },
+  miembros: {
+    id: 'miembros',
+    label: 'Miembros y Asistencia',
+    description: 'Registro de miembros, eventos, asistencia y sanciones',
+    icon: 'UserPlus',
+    color: 'teal',
+  },
+  landing: {
+    id: 'landing',
+    label: 'Landing Page',
+    description: 'Configuración visual del landing público',
+    icon: 'Layout',
+    color: 'slate',
   },
 };
 
@@ -224,6 +243,84 @@ export const ADMIN_MODULES = [
     color: 'pink',
     fields: ['titulo', 'tipo', 'numero', 'fecha', 'extracto', 'contenido', 'imagen', 'firmante'],
   },
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // GRUPO 3: Miembros y Asistencia (11-14)
+  // ─────────────────────────────────────────────────────────────────────────────
+  {
+    id: 'miembros',
+    slug: 'miembros',
+    label: 'Miembro',
+    labelPlural: 'Miembros',
+    description: 'Registro de danzantes y directivos del conjunto',
+    icon: 'UserPlus',
+    route: '/admin/miembros',
+    apiEndpoint: '/api/admin/miembros',
+    category: 'miembros',
+    order: 11,
+    color: 'teal',
+    fields: ['nombres', 'apellidos', 'dni', 'telefono', 'email', 'tipo', 'cargo', 'anio_ingreso', 'is_active', 'foto'],
+  },
+  {
+    id: 'eventos',
+    slug: 'eventos',
+    label: 'Evento',
+    labelPlural: 'Eventos',
+    description: 'Ensayos, reuniones y presentaciones del conjunto',
+    icon: 'Calendar',
+    route: '/admin/eventos',
+    apiEndpoint: '/api/admin/eventos',
+    category: 'miembros',
+    order: 12,
+    color: 'sky',
+    fields: ['titulo', 'tipo', 'fecha', 'hora_inicio', 'hora_fin', 'ubicacion', 'descripcion'],
+  },
+  {
+    id: 'sanciones',
+    slug: 'sanciones',
+    label: 'Sanción',
+    labelPlural: 'Sanciones',
+    description: 'Multas, amonestaciones y suspensiones',
+    icon: 'AlertTriangle',
+    route: '/admin/sanciones',
+    apiEndpoint: '/api/admin/sanciones',
+    category: 'miembros',
+    order: 13,
+    color: 'rose',
+    fields: ['miembro_id', 'tipo', 'monto', 'motivo', 'estado', 'fecha'],
+  },
+  {
+    id: 'reportes',
+    slug: 'reportes-asistencia',
+    label: 'Reporte',
+    labelPlural: 'Reportes',
+    description: 'Reportes de asistencia y estadísticas',
+    icon: 'BarChart3',
+    route: '/admin/reportes/asistencia',
+    apiEndpoint: null,
+    category: 'miembros',
+    order: 14,
+    color: 'indigo',
+    fields: [],
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // GRUPO 4: Landing Page (15+)
+  // ─────────────────────────────────────────────────────────────────────────────
+  {
+    id: 'heroConfig',
+    slug: 'hero-config',
+    label: 'Hero',
+    labelPlural: 'Hero Config',
+    description: 'Video, textos y configuración del hero principal',
+    icon: 'Monitor',
+    route: '/admin/hero-config',
+    apiEndpoint: '/api/admin/hero-config',
+    category: 'landing',
+    order: 15,
+    color: 'slate',
+    fields: ['titulo_principal', 'titulo_highlight', 'subtitulo', 'video_url', 'stats'],
+  },
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -256,6 +353,16 @@ export const LEGAL_MODULES = getModulesByCategory('legal');
  */
 export const MULTIMEDIA_MODULES = getModulesByCategory('multimedia');
 
+/**
+ * Módulos del grupo Miembros (11-14)
+ */
+export const MIEMBROS_MODULES = getModulesByCategory('miembros');
+
+/**
+ * Módulos del grupo Landing (15+)
+ */
+export const LANDING_MODULES = getModulesByCategory('landing');
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // NAVEGACIÓN ADMIN SIDEBAR
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -269,6 +376,17 @@ export const ADMIN_NAVIGATION = {
     },
   ],
   groups: [
+    {
+      id: 'landing',
+      label: 'Landing Page',
+      icon: 'Layout',
+      items: LANDING_MODULES.map((m) => ({
+        id: m.id,
+        label: m.labelPlural,
+        icon: m.icon,
+        route: m.route,
+      })),
+    },
     {
       id: 'legal',
       label: 'Marco Legal',
@@ -285,6 +403,17 @@ export const ADMIN_NAVIGATION = {
       label: 'Multimedia',
       icon: 'PlayCircle',
       items: MULTIMEDIA_MODULES.map((m) => ({
+        id: m.id,
+        label: m.labelPlural,
+        icon: m.icon,
+        route: m.route,
+      })),
+    },
+    {
+      id: 'miembros',
+      label: 'Miembros',
+      icon: 'UserPlus',
+      items: MIEMBROS_MODULES.map((m) => ({
         id: m.id,
         label: m.labelPlural,
         icon: m.icon,
@@ -363,4 +492,6 @@ export default {
   getModulesByCategory,
   LEGAL_MODULES,
   MULTIMEDIA_MODULES,
+  MIEMBROS_MODULES,
+  LANDING_MODULES,
 };

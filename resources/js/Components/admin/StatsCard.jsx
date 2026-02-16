@@ -15,6 +15,9 @@ const colorVariants = {
   indigo: 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400',
   pink: 'bg-pink-50 text-pink-600 dark:bg-pink-950 dark:text-pink-400',
   gray: 'bg-gray-50 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
+  teal: 'bg-teal-50 text-teal-600 dark:bg-teal-950 dark:text-teal-400',
+  sky: 'bg-sky-50 text-sky-600 dark:bg-sky-950 dark:text-sky-400',
+  rose: 'bg-rose-50 text-rose-600 dark:bg-rose-950 dark:text-rose-400',
 };
 
 const iconBgVariants = {
@@ -29,6 +32,9 @@ const iconBgVariants = {
   indigo: 'bg-indigo-100 dark:bg-indigo-900',
   pink: 'bg-pink-100 dark:bg-pink-900',
   gray: 'bg-gray-100 dark:bg-gray-700',
+  teal: 'bg-teal-100 dark:bg-teal-900',
+  sky: 'bg-sky-100 dark:bg-sky-900',
+  rose: 'bg-rose-100 dark:bg-rose-900',
 };
 
 export default function StatsCard({

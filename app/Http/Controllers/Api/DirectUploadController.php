@@ -33,7 +33,7 @@ class DirectUploadController extends Controller
         $maxGlobalSize = config('pandilla.direct_upload.videos.max_size', 5 * 1024 * 1024 * 1024);
 
         $validated = $request->validate([
-            'type' => 'required|in:videos,audios,thumbnails,documents,documents/distinciones,documents/publicaciones',
+            'type' => 'required|in:videos,audios,thumbnails,documents,documents/distinciones,documents/publicaciones,hero',
             'filename' => 'required|string|max:255',
             'contentType' => 'required|string|max:100',
             'fileSize' => "required|integer|min:1|max:{$maxGlobalSize}",

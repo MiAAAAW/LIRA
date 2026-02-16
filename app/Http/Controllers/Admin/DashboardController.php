@@ -13,6 +13,9 @@ use App\Models\Audio;
 use App\Models\Distincion;
 use App\Models\Publicacion;
 use App\Models\Comunicado;
+use App\Models\Miembro;
+use App\Models\Evento;
+use App\Models\Sancion;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -126,6 +129,35 @@ class DashboardController extends Controller
                     'route' => '/admin/comunicados',
                 ],
             ],
+            'miembros' => [
+                [
+                    'id' => 'miembros',
+                    'label' => 'Miembros',
+                    'count' => Miembro::count(),
+                    'published' => Miembro::activos()->count(),
+                    'icon' => 'UserPlus',
+                    'color' => 'teal',
+                    'route' => '/admin/miembros',
+                ],
+                [
+                    'id' => 'eventos',
+                    'label' => 'Eventos',
+                    'count' => Evento::count(),
+                    'published' => Evento::count(),
+                    'icon' => 'Calendar',
+                    'color' => 'sky',
+                    'route' => '/admin/eventos',
+                ],
+                [
+                    'id' => 'sanciones',
+                    'label' => 'Sanciones',
+                    'count' => Sancion::count(),
+                    'published' => Sancion::where('estado', 'pendiente')->count(),
+                    'icon' => 'AlertTriangle',
+                    'color' => 'rose',
+                    'route' => '/admin/sanciones',
+                ],
+            ],
             'totals' => [
                 'total' => $this->getTotalRecords(),
                 'published' => $this->getTotalPublished(),
@@ -144,7 +176,10 @@ class DashboardController extends Controller
             + Audio::count()
             + Distincion::count()
             + Publicacion::count()
-            + Comunicado::count();
+            + Comunicado::count()
+            + Miembro::count()
+            + Evento::count()
+            + Sancion::count();
     }
 
     private function getTotalPublished(): int
@@ -177,6 +212,9 @@ class DashboardController extends Controller
             ['model' => Distincion::class, 'type' => 'Distinción', 'icon' => 'Award'],
             ['model' => Publicacion::class, 'type' => 'Publicación', 'icon' => 'Newspaper'],
             ['model' => Comunicado::class, 'type' => 'Comunicado', 'icon' => 'Megaphone'],
+            ['model' => Miembro::class, 'type' => 'Miembro', 'icon' => 'UserPlus'],
+            ['model' => Evento::class, 'type' => 'Evento', 'icon' => 'Calendar'],
+            ['model' => Sancion::class, 'type' => 'Sanción', 'icon' => 'AlertTriangle'],
         ];
 
         foreach ($models as $modelInfo) {

@@ -7,6 +7,7 @@ use App\Models\BaseLegal;
 use App\Models\Comunicado;
 use App\Models\Distincion;
 use App\Models\Estandarte;
+use App\Models\HeroConfig;
 use App\Models\Ley24325;
 use App\Models\Presidente;
 use App\Models\Publicacion;
@@ -29,9 +30,14 @@ class LandingController extends Controller
         // Section visibility (1 cached query)
         $vis = SiteSetting::getSectionVisibility();
 
+        // Hero config from database (if any active)
+        $heroConfig = HeroConfig::getActive();
+
         return Inertia::render('Landing', [
             // CDN URL para assets estáticos del landing
             'cdnUrl' => $cdnUrl,
+            // Hero dinámico desde BD
+            'heroData' => $heroConfig?->toHeroConfig(),
             // ==========================================
             // MARCO LEGAL
             // ==========================================

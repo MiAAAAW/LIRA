@@ -55,6 +55,8 @@ export default function DataTable({
   // Featured config (optional) - controls "Destacar" behavior
   // { exclusive: bool, label: string, warningText: string }
   featuredConfig = null,
+  // Hide publish/featured/orden controls for internal-use modules
+  hidePublishOptions = false,
 }) {
   const [search, setSearch] = useState('');
   const [deleteItem, setDeleteItem] = useState(null);
@@ -121,6 +123,12 @@ export default function DataTable({
 
   const handleFormChange = (name, value) => {
     setFormData(name, value);
+    // Clear dependent fields when their condition is no longer met
+    formFields?.forEach(field => {
+      if (field.dependsOn && field.dependsOn.field === name && value !== field.dependsOn.value) {
+        setFormData(field.name, '');
+      }
+    });
     // Clear client error for this field when user changes it
     if (clientErrors[name]) {
       setClientErrors(prev => {
@@ -365,7 +373,7 @@ export default function DataTable({
                   {filteredData.map((item, index) => (
                     <tr
                       key={item.id || index}
-                      className="border-b last:border-0 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900"
+                      className="border-b last:border-0 dark:border-gray-800/60 transition-colors hover:bg-gray-50 dark:hover:bg-white/[0.06]"
                     >
                       {columns.map((col) => (
                         <td
@@ -457,7 +465,7 @@ export default function DataTable({
         onOpenChange={(open) => !open && setDeleteItem(null)}
         onConfirm={handleDelete}
         title="Eliminar registro"
-        description={`¿Estás seguro de eliminar "${deleteItem?.titulo || deleteItem?.nombres || 'este registro'}"? Esta acción no se puede deshacer.`}
+        description={`¿Estás seguro de eliminar "${deleteItem?.titulo || deleteItem?.titulo_principal || deleteItem?.nombres || deleteItem?.nombre || 'este registro'}"? Esta acción no se puede deshacer.`}
       />
 
       {/* Create/Edit Modal - Dialog centrado */}
@@ -471,9 +479,10 @@ export default function DataTable({
               <DialogDescription>{modalDescription}</DialogDescription>
             </DialogHeader>
 
-            <div className="flex-1 overflow-y-auto max-h-[60vh] pr-2">
-              <form id="crud-form" onSubmit={handleSubmit} className="space-y-4 py-2">
+            <div className="flex-1 overflow-y-auto pr-2">
+              <form id="crud-form" onSubmit={handleSubmit} className="space-y-3 py-1">
                 {/* Publish Options - FIRST for visibility */}
+                {!hidePublishOptions && (
                 <div className="flex flex-wrap items-center gap-4 p-3 bg-muted/50 rounded-lg border">
                   <FormField
                     label="Publicar"
@@ -512,10 +521,17 @@ export default function DataTable({
                     />
                   </div>
                 </div>
+                )}
 
                 {/* Dynamic Fields */}
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-3 sm:grid-cols-2">
                   {formFields?.map((field) => {
+                    if (field.dependsOn) {
+                      if (formData[field.dependsOn.field] !== field.dependsOn.value) {
+                        return null;
+                      }
+                    }
+
                     const isFullWidth = field.fullWidth || field.type === 'textarea' || field.type === 'rich-text' || field.type === 'file' || field.type === 'image' || field.type === 'direct-upload';
 
                     // Rich Text Editor (Tiptap)
@@ -606,36 +622,37 @@ export default function DataTable({
                   })}
                 </div>
 
-                {/* Actions inside form */}
-                <div className="flex items-center justify-end gap-3 pt-4 border-t dark:border-gray-800">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleCloseModal}
-                    disabled={processing}
-                  >
-                    Cancelar
-                  </Button>
-                  <Button type="submit" disabled={processing || isUploading}>
-                    {processing ? (
-                      <>
-                        <DynamicIcon name="Loader2" className="h-4 w-4 mr-2 animate-spin" />
-                        Guardando...
-                      </>
-                    ) : isUploading ? (
-                      <>
-                        <DynamicIcon name="Loader2" className="h-4 w-4 mr-2 animate-spin" />
-                        Subiendo archivo...
-                      </>
-                    ) : (
-                      <>
-                        <DynamicIcon name="Save" className="h-4 w-4 mr-2" />
-                        {isEdit ? 'Actualizar' : 'Crear'}
-                      </>
-                    )}
-                  </Button>
-                </div>
               </form>
+            </div>
+
+            {/* Actions outside scroll area - always visible */}
+            <div className="flex items-center justify-end gap-3 pt-3 border-t dark:border-gray-800 flex-shrink-0">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCloseModal}
+                disabled={processing}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" form="crud-form" disabled={processing || isUploading}>
+                {processing ? (
+                  <>
+                    <DynamicIcon name="Loader2" className="h-4 w-4 mr-2 animate-spin" />
+                    Guardando...
+                  </>
+                ) : isUploading ? (
+                  <>
+                    <DynamicIcon name="Loader2" className="h-4 w-4 mr-2 animate-spin" />
+                    Subiendo archivo...
+                  </>
+                ) : (
+                  <>
+                    <DynamicIcon name="Save" className="h-4 w-4 mr-2" />
+                    {isEdit ? 'Actualizar' : 'Crear'}
+                  </>
+                )}
+              </Button>
             </div>
           </DialogContent>
         </Dialog>

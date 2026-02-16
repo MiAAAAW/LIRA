@@ -49,8 +49,9 @@ function DynamicIcon({ name, className }) {
 
 /**
  * Video Background Component
+ * Falls back to gradient if video fails to load
  */
-function VideoBackground({ video }) {
+function VideoBackground({ video, onError }) {
   const [isReady, setIsReady] = useState(false);
   const videoRef = useRef(null);
   const videoSrc = video?.src;
@@ -59,19 +60,21 @@ function VideoBackground({ video }) {
     const videoElement = videoRef.current;
     if (!videoElement || !videoSrc) return;
 
-    // Reset state cuando cambia el source
     setIsReady(false);
 
     const handleReady = () => setIsReady(true);
+    const handleError = () => onError?.();
 
     videoElement.addEventListener('canplaythrough', handleReady);
     videoElement.addEventListener('loadeddata', handleReady);
+    videoElement.addEventListener('error', handleError);
 
     return () => {
       videoElement.removeEventListener('canplaythrough', handleReady);
       videoElement.removeEventListener('loadeddata', handleReady);
+      videoElement.removeEventListener('error', handleError);
     };
-  }, [videoSrc]);
+  }, [videoSrc, onError]);
 
   if (!videoSrc) return null;
 
@@ -119,14 +122,53 @@ function HeroBackgroundFallback() {
 }
 
 /**
- * Hero Background - Wrapper que elige entre video o fallback
+ * Image Background Component
+ * Falls back to gradient if image fails to load
  */
-function HeroBackground({ video }) {
-  // Si hay video configurado, usamos VideoBackground
-  if (video?.src) {
-    return <VideoBackground video={video} />;
+function ImageBackground({ image, onError }) {
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  if (!image?.src) return null;
+
+  return (
+    <div className="absolute inset-0 -z-10 overflow-hidden bg-background">
+      <img
+        src={image.src}
+        alt={image.alt || ''}
+        onLoad={() => setIsLoaded(true)}
+        onError={() => onError?.()}
+        className={cn(
+          "absolute inset-0 w-full h-full object-cover object-center",
+          "transition-opacity duration-700",
+          isLoaded ? "opacity-100" : "opacity-0"
+        )}
+      />
+    </div>
+  );
+}
+
+/**
+ * Hero Background - Wrapper que elige entre video, imagen o fallback
+ * Si el media falla al cargar, cae automáticamente al gradiente
+ */
+function HeroBackground({ video, image }) {
+  const [mediaFailed, setMediaFailed] = useState(false);
+
+  // Reset error state si cambia el source
+  useEffect(() => {
+    setMediaFailed(false);
+  }, [video?.src, image?.src]);
+
+  if (mediaFailed) {
+    return <HeroBackgroundFallback />;
   }
-  // Si no hay video, usamos el fallback animado
+
+  if (video?.src) {
+    return <VideoBackground video={video} onError={() => setMediaFailed(true)} />;
+  }
+  if (image?.src) {
+    return <ImageBackground image={image} onError={() => setMediaFailed(true)} />;
+  }
   return <HeroBackgroundFallback />;
 }
 
@@ -262,8 +304,8 @@ export function Hero({ config, className }) {
         className
       )}
     >
-      {/* Background - Video o Fallback animado */}
-      <HeroBackground video={config.video} />
+      {/* Background - Video, Imagen o Fallback animado */}
+      <HeroBackground video={config.video} image={config.image} />
 
       {/* Overlay para legibilidad del texto */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-black/15 to-transparent pointer-events-none" />

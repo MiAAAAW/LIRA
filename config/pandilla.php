@@ -117,6 +117,89 @@ return [
             'icono' => 'megaphone',
             'habilitado' => true,
         ],
+        'miembros' => [
+            'nombre' => 'Miembros',
+            'descripcion' => 'Registro de danzantes y directivos del conjunto',
+            'icono' => 'user-plus',
+            'habilitado' => true,
+        ],
+        'eventos' => [
+            'nombre' => 'Eventos',
+            'descripcion' => 'Ensayos, reuniones y presentaciones',
+            'icono' => 'calendar',
+            'habilitado' => true,
+        ],
+        'sanciones' => [
+            'nombre' => 'Sanciones',
+            'descripcion' => 'Multas, amonestaciones y suspensiones',
+            'icono' => 'alert-triangle',
+            'habilitado' => true,
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Tipos de Miembro
+    |--------------------------------------------------------------------------
+    */
+
+    'tipos_miembro' => [
+        'danzante' => 'Danzante',
+        'directivo' => 'Directivo',
+    ],
+
+    'cargos_directivo' => [
+        'presidente' => 'Presidente',
+        'vicepresidente' => 'Vicepresidente',
+        'secretario' => 'Secretario',
+        'tesorero' => 'Tesorero',
+        'fiscal' => 'Fiscal',
+        'vocal' => 'Vocal',
+        'delegado' => 'Delegado',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Tipos de Evento
+    |--------------------------------------------------------------------------
+    */
+
+    'tipos_evento' => [
+        'ensayo' => 'Ensayo',
+        'reunion' => 'Reunión',
+        'presentacion' => 'Presentación',
+        'otro' => 'Otro',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Estados de Asistencia
+    |--------------------------------------------------------------------------
+    */
+
+    'estados_asistencia' => [
+        'presente' => 'Presente',
+        'ausente' => 'Ausente',
+        'tardanza' => 'Tardanza',
+        'justificado' => 'Justificado',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Tipos de Sanción
+    |--------------------------------------------------------------------------
+    */
+
+    'tipos_sancion' => [
+        'multa' => 'Multa',
+        'amonestacion' => 'Amonestación',
+        'suspension' => 'Suspensión',
+    ],
+
+    'estados_sancion' => [
+        'pendiente' => 'Pendiente',
+        'pagado' => 'Pagado',
+        'condonado' => 'Condonado',
     ],
 
     /*
@@ -329,6 +412,18 @@ return [
                 'application/pdf',
             ],
         ],
+
+        'hero' => [
+            'max_size' => 5 * 1024 * 1024 * 1024, // 5GB (videos grandes)
+            'mime_types' => [
+                'video/mp4',
+                'video/webm',
+                'video/quicktime',
+                'image/jpeg',
+                'image/png',
+                'image/webp',
+            ],
+        ],
     ],
 
     /*
@@ -351,6 +446,12 @@ return [
         'presidentes' => [
             'original' => ['width' => 500, 'height' => 500],
             'thumbnail' => ['width' => 150, 'height' => 150],
+            'quality' => 85,
+            'aspect' => '1:1', // cuadrado
+        ],
+        'miembros' => [
+            'original' => ['width' => 400, 'height' => 400],
+            'thumbnail' => ['width' => 100, 'height' => 100],
             'quality' => 85,
             'aspect' => '1:1', // cuadrado
         ],

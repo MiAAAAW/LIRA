@@ -81,6 +81,12 @@ export default function DirectUpload({
       icon: 'FileText',
       label: 'documento PDF',
     },
+    hero: {
+      accept: accept || 'video/mp4,video/webm,video/quicktime,image/jpeg,image/png,image/webp',
+      maxSize: maxSize || 5 * 1024 * 1024 * 1024, // 5GB
+      icon: 'Monitor',
+      label: 'video o imagen',
+    },
   };
 
   // Tipo base para matching: 'documents/publicaciones' → 'documents'
@@ -362,41 +368,53 @@ export default function DirectUpload({
             <div className="space-y-3">
               {/* Preview del video/audio/imagen/documento existente */}
               <div className="relative mx-auto max-w-[280px] rounded-lg overflow-hidden bg-muted">
-                {baseType === 'videos' ? (
-                  <video
-                    src={existingFile.url}
-                    className="w-full aspect-video object-cover"
-                    controls
-                    preload="metadata"
-                  />
-                ) : baseType === 'audios' ? (
-                  <div className="p-4 flex items-center gap-3">
-                    <div className="p-2 bg-primary/10 rounded-full">
-                      <DynamicIcon name="Music" className="h-6 w-6 text-primary" />
+                {(() => {
+                  // Detect media type from URL extension for mixed types like 'hero'
+                  const url = existingFile.url || '';
+                  const ext = url.split('?')[0].split('.').pop()?.toLowerCase();
+                  const isVideo = baseType === 'videos' || (baseType === 'hero' && ['mp4', 'webm', 'mov'].includes(ext));
+                  const isAudio = baseType === 'audios';
+                  const isDocument = baseType === 'documents';
+
+                  if (isVideo) return (
+                    <video
+                      src={existingFile.url}
+                      className="w-full aspect-video object-cover"
+                      controls
+                      preload="metadata"
+                    />
+                  );
+                  if (isAudio) return (
+                    <div className="p-4 flex items-center gap-3">
+                      <div className="p-2 bg-primary/10 rounded-full">
+                        <DynamicIcon name="Music" className="h-6 w-6 text-primary" />
+                      </div>
+                      <audio src={existingFile.url} controls className="flex-1" preload="metadata" />
                     </div>
-                    <audio src={existingFile.url} controls className="flex-1" preload="metadata" />
-                  </div>
-                ) : baseType === 'documents' ? (
-                  <div className="p-4 flex flex-col items-center gap-3">
-                    <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-full">
-                      <DynamicIcon name="FileText" className="h-8 w-8 text-red-600" />
+                  );
+                  if (isDocument) return (
+                    <div className="p-4 flex flex-col items-center gap-3">
+                      <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-full">
+                        <DynamicIcon name="FileText" className="h-8 w-8 text-red-600" />
+                      </div>
+                      <a
+                        href={existingFile.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary hover:underline"
+                      >
+                        Ver documento PDF
+                      </a>
                     </div>
-                    <a
-                      href={existingFile.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-primary hover:underline"
-                    >
-                      Ver documento PDF
-                    </a>
-                  </div>
-                ) : (
-                  <img
-                    src={existingFile.url}
-                    alt={existingFile.name || 'Imagen existente'}
-                    className="w-full aspect-video object-cover"
-                  />
-                )}
+                  );
+                  return (
+                    <img
+                      src={existingFile.url}
+                      alt={existingFile.name || 'Imagen existente'}
+                      className="w-full aspect-video object-cover"
+                    />
+                  );
+                })()}
               </div>
 
               <div className="flex items-center justify-center gap-2">

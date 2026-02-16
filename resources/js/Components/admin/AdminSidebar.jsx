@@ -5,7 +5,7 @@ import { ScrollArea } from '@/Components/ui/scroll-area';
 import { Separator } from '@/Components/ui/separator';
 import DynamicIcon from '@/Components/DynamicIcon';
 import { ADMIN_NAVIGATION, ADMIN_CONFIG, ADMIN_ROUTES } from '@/lib/admin-constants';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 
 export default function AdminSidebar({
   isOpen = true,
@@ -14,13 +14,24 @@ export default function AdminSidebar({
   isMobile = false
 }) {
   const { url } = usePage();
-  const [expandedGroups, setExpandedGroups] = useState(['legal', 'multimedia']);
+
+  // Auto-detect which group contains the active route
+  const activeGroupId = useMemo(() => {
+    for (const group of ADMIN_NAVIGATION.groups) {
+      if (group.items.some(item => url.startsWith(item.route))) {
+        return group.id;
+      }
+    }
+    return null;
+  }, [url]);
+
+  const [expandedGroups, setExpandedGroups] = useState(() =>
+    activeGroupId ? [activeGroupId] : []
+  );
 
   const toggleGroup = (groupId) => {
     setExpandedGroups(prev =>
-      prev.includes(groupId)
-        ? prev.filter(id => id !== groupId)
-        : [...prev, groupId]
+      prev.includes(groupId) ? [] : [groupId]
     );
   };
 

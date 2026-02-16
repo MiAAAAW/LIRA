@@ -54,6 +54,17 @@ export default function Dashboard({ stats, recentActivity }) {
           <StatsCardGrid stats={stats.multimedia} />
         </section>
 
+        {/* Stats Grid - Miembros */}
+        <section>
+          <div className="flex items-center gap-2 mb-4">
+            <DynamicIcon name="UserPlus" className="h-5 w-5 text-teal-600" />
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Miembros y Asistencia
+            </h2>
+          </div>
+          <StatsCardGrid stats={stats.miembros} />
+        </section>
+
         {/* Recent Activity & Quick Actions */}
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Recent Activity */}
@@ -148,6 +159,18 @@ export default function Dashboard({ stats, recentActivity }) {
                   label="Nueva Publicación"
                   color="indigo"
                 />
+                <QuickActionButton
+                  href="/admin/miembros"
+                  icon="UserPlus"
+                  label="Agregar Miembro"
+                  color="teal"
+                />
+                <QuickActionButton
+                  href="/admin/eventos"
+                  icon="Calendar"
+                  label="Crear Evento"
+                  color="sky"
+                />
               </div>
             </CardContent>
           </Card>
@@ -190,6 +213,8 @@ function QuickActionButton({ href, icon, label, color }) {
     yellow: 'hover:bg-yellow-50 hover:text-yellow-600 hover:border-yellow-200 dark:hover:bg-yellow-950',
     violet: 'hover:bg-violet-50 hover:text-violet-600 hover:border-violet-200 dark:hover:bg-violet-950',
     indigo: 'hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 dark:hover:bg-indigo-950',
+    teal: 'hover:bg-teal-50 hover:text-teal-600 hover:border-teal-200 dark:hover:bg-teal-950',
+    sky: 'hover:bg-sky-50 hover:text-sky-600 hover:border-sky-200 dark:hover:bg-sky-950',
   };
 
   return (

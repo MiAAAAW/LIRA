@@ -87,6 +87,7 @@
   }
 
   .dark {
+    color-scheme: dark;
     /* === DARK MODE - Lago de Noche === */
     --background: 214 50% 6%;
     --foreground: 200 20% 95%;

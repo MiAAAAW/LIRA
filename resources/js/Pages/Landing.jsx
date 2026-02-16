@@ -30,6 +30,8 @@ import { ContentColumns } from '@/Components/sections/ContentColumns';
 export default function Landing({
   // CDN URL para assets
   cdnUrl = '',
+  // Hero dinámico desde BD
+  heroData = null,
   // Marco Legal
   ley24325 = [],
   baseLegal = [],
@@ -50,8 +52,8 @@ export default function Landing({
   // Config para UI strings y secciones fijas
   const config = landingConfig;
 
-  // Merge hero config con video URL dinámica del CDN
-  const heroConfig = {
+  // Hero: usar heroData de BD si existe, fallback a config estático + CDN
+  const heroConfig = heroData ?? {
     ...config.hero,
     video: cdnUrl ? {
       src: `${cdnUrl}/landing/landing.mp4`,
