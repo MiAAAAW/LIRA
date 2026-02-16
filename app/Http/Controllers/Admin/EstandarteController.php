@@ -7,6 +7,7 @@ use App\Models\Estandarte;
 use App\Models\SiteSetting;
 use App\Services\ImageProcessingService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -18,9 +19,14 @@ class EstandarteController extends Controller
 
     public function index(): Response
     {
-        $items = Estandarte::orderBy('orden')
-            ->orderByDesc('created_at')
-            ->paginate(config('pandilla.pagination.admin', 15));
+        try {
+            $items = Estandarte::orderBy('orden')
+                ->orderByDesc('created_at')
+                ->paginate(config('pandilla.pagination.admin', 15));
+        } catch (\Throwable $e) {
+            Log::error('Estandartes index query failed', ['error' => $e->getMessage()]);
+            throw $e;
+        }
 
         return Inertia::render('Admin/Estandartes/Index', [
             'items' => $items,
@@ -42,14 +48,34 @@ class EstandarteController extends Controller
         // Set defaults
         $validated['orden'] = $validated['orden'] ?? 0;
 
-        // Procesar imagen con el servicio
-        $paths = $this->imageService->process(
-            $request->file('imagen_principal'),
-            'estandartes'
-        );
-        $validated['imagen_principal'] = $paths['original'];
+        try {
+            Log::info('Estandarte store: processing image...');
+            $paths = $this->imageService->process(
+                $request->file('imagen_principal'),
+                'estandartes'
+            );
+            $validated['imagen_principal'] = $paths['original'];
+            Log::info('Estandarte store: image processed', ['paths' => $paths]);
+        } catch (\Throwable $e) {
+            Log::error('Estandarte store: image processing failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return redirect()->route('admin.estandartes.index')
+                ->with('error', 'Error procesando imagen: ' . $e->getMessage());
+        }
 
-        Estandarte::create($validated);
+        try {
+            Estandarte::create($validated);
+            Log::info('Estandarte store: created successfully');
+        } catch (\Throwable $e) {
+            Log::error('Estandarte store: DB insert failed', [
+                'error' => $e->getMessage(),
+                'validated' => $validated,
+            ]);
+            return redirect()->route('admin.estandartes.index')
+                ->with('error', 'Error guardando en BD: ' . $e->getMessage());
+        }
 
         return redirect()->route('admin.estandartes.index')
             ->with('success', 'Estandarte creado correctamente');
