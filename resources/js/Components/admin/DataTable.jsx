@@ -699,7 +699,9 @@ function renderCell(item, col) {
   }
 
   if (col.type === 'date') {
-    return value ? new Date(value).toLocaleDateString('es-PE') : '-';
+    if (!value) return '-';
+    const [y, m, d] = String(value).split('T')[0].split('-').map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString('es-PE');
   }
 
   if (col.type === 'image') {

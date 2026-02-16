@@ -189,7 +189,7 @@ export default function FormField({
             id={id}
             name={name}
             type="date"
-            value={value || ''}
+            value={value ? String(value).split('T')[0] : ''}
             onChange={handleChange}
             placeholder={placeholder}
             disabled={disabled}

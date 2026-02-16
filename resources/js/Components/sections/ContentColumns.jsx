@@ -96,10 +96,18 @@ const PDFFullscreenModal = React.memo(function PDFFullscreenModal({
   doc, isOpen, onClose, icon: Icon
 }) {
   const [isLoading, setIsLoading] = React.useState(true);
+  const [isMobile, setIsMobile] = React.useState(false);
 
   React.useEffect(() => {
     if (isOpen) setIsLoading(true);
   }, [isOpen, doc?.id]);
+
+  React.useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   if (!doc) return null;
 
@@ -144,7 +152,10 @@ const PDFFullscreenModal = React.memo(function PDFFullscreenModal({
             </div>
           )}
           <iframe
-            src={`${pdfUrl}#toolbar=1&navpanes=0&scrollbar=1&view=FitH`}
+            src={isMobile
+              ? `https://docs.google.com/viewer?url=${encodeURIComponent(pdfUrl)}&embedded=true`
+              : `${pdfUrl}#toolbar=1&navpanes=0&scrollbar=1&view=FitH`
+            }
             className="w-full h-full border-0"
             title={`PDF: ${doc.titulo}`}
             style={{ colorScheme: 'light' }}
@@ -1667,10 +1678,18 @@ const PublicacionCard = React.memo(function PublicacionCard({ item, onClick }) {
 
 const PublicacionPdfModal = React.memo(function PublicacionPdfModal({ item, isOpen, onClose }) {
   const [isLoading, setIsLoading] = React.useState(true);
+  const [isMobile, setIsMobile] = React.useState(false);
 
   React.useEffect(() => {
     if (isOpen) setIsLoading(true);
   }, [isOpen, item?.id]);
+
+  React.useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   if (!item) return null;
 
@@ -1741,7 +1760,10 @@ const PublicacionPdfModal = React.memo(function PublicacionPdfModal({ item, isOp
                 </div>
               )}
               <iframe
-                src={`${pdfUrl}#toolbar=1&navpanes=0&scrollbar=1&view=FitH`}
+                src={isMobile
+                  ? `https://docs.google.com/viewer?url=${encodeURIComponent(pdfUrl)}&embedded=true`
+                  : `${pdfUrl}#toolbar=1&navpanes=0&scrollbar=1&view=FitH`
+                }
                 className="w-full h-full border-0"
                 title={`PDF: ${item.titulo}`}
                 style={{ colorScheme: 'light' }}
