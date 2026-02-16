@@ -47,10 +47,13 @@ export default function Index({ items, tiposRegistro, sectionVisible }) {
     {
       name: 'certificado_pdf',
       label: 'Certificado PDF',
-      type: 'file',
-      accept: '.pdf',
+      type: 'direct-upload',
+      uploadType: 'documents/indecopi',
+      keyField: 'r2_pdf_key',
+      urlField: 'r2_pdf_url',
       required: true,
-      helpText: 'El certificado oficial de INDECOPI en PDF',
+      fullWidth: true,
+      helpText: 'Max 50MB. Subida directa a CDN.',
     },
   ];
 

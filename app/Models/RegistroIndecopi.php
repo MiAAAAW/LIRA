@@ -26,12 +26,16 @@ class RegistroIndecopi extends Model
         'descripcion',
         'contenido',
         'certificado_pdf',
+        'r2_pdf_key',
+        'r2_pdf_url',
         'imagen',
         'estado',
         'orden',
         'is_published',
         'is_featured',
     ];
+
+    protected $appends = ['pdf_url'];
 
     protected $casts = [
         'fecha_registro' => 'date',
@@ -61,6 +65,22 @@ class RegistroIndecopi extends Model
         return Attribute::make(
             get: fn (?string $value) => $value ? Storage::disk('public')->url($value) : null,
         );
+    }
+
+    /**
+     * URL del PDF (prioriza CDN sobre local)
+     */
+    public function getPdfUrlAttribute(): ?string
+    {
+        if ($this->r2_pdf_url) {
+            return $this->r2_pdf_url;
+        }
+
+        if ($this->certificado_pdf) {
+            return $this->certificado_pdf;
+        }
+
+        return null;
     }
 
     /**

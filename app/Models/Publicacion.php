@@ -26,6 +26,8 @@ class Publicacion extends Model
         'descripcion',
         'resumen',
         'imagen_portada',
+        'r2_image_key',
+        'r2_image_url',
         'documento_pdf',
         'enlace_compra',
         'enlace_descarga',

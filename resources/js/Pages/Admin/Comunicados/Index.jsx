@@ -22,7 +22,15 @@ export default function Index({ items, tipos, sectionVisible }) {
     { name: 'fecha', label: 'Fecha', type: 'date', required: true },
     { name: 'firmante', label: 'Firmante', placeholder: 'Nombre del firmante' },
     { name: 'contenido', label: 'Contenido', type: 'rich-text', required: true, fullWidth: true, placeholder: 'Escribe el contenido del comunicado...' },
-    { name: 'imagen', label: 'Imagen adjunta', type: 'image' },
+    {
+      name: 'imagen',
+      label: 'Imagen adjunta',
+      type: 'direct-upload',
+      uploadType: 'images/comunicados',
+      keyField: 'r2_image_key',
+      urlField: 'r2_image_url',
+      helpText: 'Opcional. Max 10MB. Subida directa a CDN.',
+    },
   ];
 
   return (

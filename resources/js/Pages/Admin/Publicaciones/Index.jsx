@@ -6,7 +6,7 @@ export default function Index({ items, tipos, sectionVisible }) {
   const tipoOptions = Object.entries(tipos || {}).map(([value, label]) => ({ value, label }));
 
   const columns = [
-    { key: 'imagen_portada', label: 'Portada', type: 'image' },
+    { key: 'image_url', label: 'Portada', type: 'image' },
     { key: 'titulo', label: 'Titulo' },
     {
       key: 'tipo',
@@ -76,8 +76,12 @@ export default function Index({ items, tipos, sectionVisible }) {
     {
       name: 'imagen_portada',
       label: 'Portada',
-      type: 'image',
+      type: 'direct-upload',
+      uploadType: 'images/publicaciones',
+      keyField: 'r2_image_key',
+      urlField: 'r2_image_url',
       required: true,
+      helpText: 'Max 10MB. Subida directa a CDN.',
     },
     {
       name: 'documento_pdf',

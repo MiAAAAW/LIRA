@@ -50,6 +50,11 @@ trait HasProcessedImages
      */
     public function getImageUrlAttribute(): ?string
     {
+        // Priorizar R2
+        if (!empty($this->r2_image_url)) {
+            return $this->r2_image_url;
+        }
+
         $field = $this->getImageField();
         $path = $this->{$field};
 
@@ -71,6 +76,11 @@ trait HasProcessedImages
      */
     public function getThumbnailUrlAttribute(): ?string
     {
+        // R2 no genera variantes - retornar la misma URL
+        if (!empty($this->r2_image_url)) {
+            return $this->r2_image_url;
+        }
+
         $field = $this->getImageField();
         $path = $this->{$field};
 
@@ -93,6 +103,11 @@ trait HasProcessedImages
      */
     public function getWebpUrlAttribute(): ?string
     {
+        // R2 no genera variantes - retornar la misma URL
+        if (!empty($this->r2_image_url)) {
+            return $this->r2_image_url;
+        }
+
         if (!config('pandilla.webp.enabled', true)) {
             return null;
         }

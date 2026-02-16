@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Estandarte;
 use App\Models\SiteSetting;
-use App\Services\ImageProcessingService;
+use App\Services\CloudflareMediaService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
@@ -14,7 +14,7 @@ use Inertia\Response;
 class EstandarteController extends Controller
 {
     public function __construct(
-        protected ImageProcessingService $imageService
+        protected CloudflareMediaService $r2Service
     ) {}
 
     public function index(): Response
@@ -39,43 +39,16 @@ class EstandarteController extends Controller
         $validated = $request->validate([
             'titulo' => 'required|string|max:255',
             'descripcion' => 'nullable|string',
-            'imagen_principal' => 'required|image|max:5120',
+            'r2_image_key' => 'required|string',
+            'r2_image_url' => 'required|url',
             'orden' => 'nullable|integer',
             'is_published' => 'boolean',
             'is_featured' => 'boolean',
         ]);
 
-        // Set defaults
         $validated['orden'] = $validated['orden'] ?? 0;
 
-        try {
-            Log::info('Estandarte store: processing image...');
-            $paths = $this->imageService->process(
-                $request->file('imagen_principal'),
-                'estandartes'
-            );
-            $validated['imagen_principal'] = $paths['original'];
-            Log::info('Estandarte store: image processed', ['paths' => $paths]);
-        } catch (\Throwable $e) {
-            Log::error('Estandarte store: image processing failed', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-            return redirect()->route('admin.estandartes.index')
-                ->with('error', 'Error procesando imagen: ' . $e->getMessage());
-        }
-
-        try {
-            Estandarte::create($validated);
-            Log::info('Estandarte store: created successfully');
-        } catch (\Throwable $e) {
-            Log::error('Estandarte store: DB insert failed', [
-                'error' => $e->getMessage(),
-                'validated' => $validated,
-            ]);
-            return redirect()->route('admin.estandartes.index')
-                ->with('error', 'Error guardando en BD: ' . $e->getMessage());
-        }
+        Estandarte::create($validated);
 
         return redirect()->route('admin.estandartes.index')
             ->with('success', 'Estandarte creado correctamente');
@@ -86,23 +59,18 @@ class EstandarteController extends Controller
         $validated = $request->validate([
             'titulo' => 'required|string|max:255',
             'descripcion' => 'nullable|string',
-            'imagen_principal' => 'nullable|image|max:5120',
+            'r2_image_key' => 'nullable|string',
+            'r2_image_url' => 'nullable|url',
             'orden' => 'nullable|integer',
             'is_published' => 'boolean',
             'is_featured' => 'boolean',
         ]);
 
-        // Set defaults
         $validated['orden'] = $validated['orden'] ?? 0;
 
-        if ($request->hasFile('imagen_principal')) {
-            // Procesar nueva imagen y eliminar anterior automáticamente
-            $paths = $this->imageService->process(
-                $request->file('imagen_principal'),
-                'estandartes',
-                $estandarte->imagen_principal
-            );
-            $validated['imagen_principal'] = $paths['original'];
+        // Si hay nueva imagen en R2, eliminar la anterior
+        if (!empty($validated['r2_image_key']) && $estandarte->r2_image_key) {
+            $this->r2Service->delete($estandarte->r2_image_key);
         }
 
         $estandarte->update($validated);
@@ -113,9 +81,8 @@ class EstandarteController extends Controller
 
     public function destroy(Estandarte $estandarte)
     {
-        // Eliminar todas las variantes de imagen
-        if ($estandarte->imagen_principal) {
-            $this->imageService->delete($estandarte->imagen_principal, 'estandartes');
+        if ($estandarte->r2_image_key) {
+            $this->r2Service->delete($estandarte->r2_image_key);
         }
 
         $estandarte->delete();

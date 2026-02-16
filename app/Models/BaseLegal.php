@@ -24,11 +24,15 @@ class BaseLegal extends Model
         'descripcion',
         'contenido',
         'documento_pdf',
+        'r2_pdf_key',
+        'r2_pdf_url',
         'enlace_externo',
         'orden',
         'is_published',
         'is_featured',
     ];
+
+    protected $appends = ['pdf_url'];
 
     protected $casts = [
         'fecha_emision' => 'date',
@@ -52,5 +56,21 @@ class BaseLegal extends Model
         return Attribute::make(
             get: fn (?string $value) => $value ? Storage::disk('public')->url($value) : null,
         );
+    }
+
+    /**
+     * URL del PDF (prioriza CDN sobre local)
+     */
+    public function getPdfUrlAttribute(): ?string
+    {
+        if ($this->r2_pdf_url) {
+            return $this->r2_pdf_url;
+        }
+
+        if ($this->documento_pdf) {
+            return $this->documento_pdf;
+        }
+
+        return null;
     }
 }

@@ -5,13 +5,17 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\RegistroIndecopi;
 use App\Models\SiteSetting;
+use App\Services\CloudflareMediaService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class RegistroIndecopiController extends Controller
 {
+    public function __construct(
+        protected CloudflareMediaService $r2Service
+    ) {}
+
     public function index(): Response
     {
         $items = RegistroIndecopi::orderBy('orden')
@@ -32,17 +36,13 @@ class RegistroIndecopiController extends Controller
             'tipo_registro' => 'nullable|string',
             'numero_registro' => 'nullable|string|max:100',
             'fecha_registro' => 'nullable|date',
-            'certificado_pdf' => 'required|file|mimes:pdf|max:10240',
+            'r2_pdf_key' => 'required|string',
+            'r2_pdf_url' => 'required|url',
             'orden' => 'nullable|integer',
             'is_published' => 'nullable',
         ]);
 
         $validated['is_published'] = filter_var($request->input('is_published', true), FILTER_VALIDATE_BOOLEAN);
-
-        if ($request->hasFile('certificado_pdf')) {
-            $validated['certificado_pdf'] = $request->file('certificado_pdf')
-                ->store(config('pandilla.uploads.paths.documents'), 'public');
-        }
 
         RegistroIndecopi::create($validated);
 
@@ -57,20 +57,17 @@ class RegistroIndecopiController extends Controller
             'tipo_registro' => 'nullable|string',
             'numero_registro' => 'nullable|string|max:100',
             'fecha_registro' => 'nullable|date',
-            'certificado_pdf' => 'nullable|file|mimes:pdf|max:10240',
+            'r2_pdf_key' => 'nullable|string',
+            'r2_pdf_url' => 'nullable|url',
             'orden' => 'nullable|integer',
             'is_published' => 'nullable',
         ]);
 
         $validated['is_published'] = filter_var($request->input('is_published', false), FILTER_VALIDATE_BOOLEAN);
 
-        if ($request->hasFile('certificado_pdf')) {
-            $oldPath = $indecopi->getRawOriginal('certificado_pdf');
-            if ($oldPath) {
-                Storage::disk('public')->delete($oldPath);
-            }
-            $validated['certificado_pdf'] = $request->file('certificado_pdf')
-                ->store(config('pandilla.uploads.paths.documents'), 'public');
+        // Si hay nuevo PDF en R2, eliminar el anterior
+        if (!empty($validated['r2_pdf_key']) && $indecopi->r2_pdf_key) {
+            $this->r2Service->delete($indecopi->r2_pdf_key);
         }
 
         $indecopi->update($validated);
@@ -81,6 +78,10 @@ class RegistroIndecopiController extends Controller
 
     public function destroy(RegistroIndecopi $indecopi)
     {
+        if ($indecopi->r2_pdf_key) {
+            $this->r2Service->delete($indecopi->r2_pdf_key);
+        }
+
         $indecopi->delete();
 
         return redirect()->route('admin.indecopi.index')

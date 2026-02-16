@@ -4,7 +4,7 @@ import DataTable from '@/Components/admin/DataTable';
 
 export default function Index({ items, sectionVisible }) {
   const columns = [
-    { key: 'imagen_principal', label: 'Imagen', type: 'image' },
+    { key: 'image_url', label: 'Imagen', type: 'image' },
     { key: 'titulo', label: 'Título' },
     { key: 'is_published', label: 'Estado', type: 'badge' },
   ];
@@ -28,10 +28,13 @@ export default function Index({ items, sectionVisible }) {
     {
       name: 'imagen_principal',
       label: 'Imagen',
-      type: 'image',
+      type: 'direct-upload',
+      uploadType: 'images/estandartes',
+      keyField: 'r2_image_key',
+      urlField: 'r2_image_url',
       required: true,
-      helpText: 'Imagen del estandarte (JPG, PNG, max 5MB)',
       fullWidth: true,
+      helpText: 'Max 10MB. Subida directa a CDN.',
     },
   ];
 

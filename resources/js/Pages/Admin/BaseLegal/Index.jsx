@@ -52,10 +52,13 @@ export default function Index({ items, tiposDocumento, sectionVisible }) {
     {
       name: 'documento_pdf',
       label: 'Documento PDF',
-      type: 'file',
-      accept: '.pdf',
+      type: 'direct-upload',
+      uploadType: 'documents/baselegal',
+      keyField: 'r2_pdf_key',
+      urlField: 'r2_pdf_url',
       required: true,
-      helpText: 'Resolución, decreto o normativa en PDF',
+      fullWidth: true,
+      helpText: 'Max 50MB. Subida directa a CDN.',
     },
   ];
 

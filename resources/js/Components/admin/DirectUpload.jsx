@@ -81,6 +81,54 @@ export default function DirectUpload({
       icon: 'FileText',
       label: 'documento PDF',
     },
+    'documents/ley24325': {
+      accept: accept || 'application/pdf',
+      maxSize: maxSize || 50 * 1024 * 1024, // 50MB
+      icon: 'FileText',
+      label: 'documento PDF',
+    },
+    'documents/baselegal': {
+      accept: accept || 'application/pdf',
+      maxSize: maxSize || 50 * 1024 * 1024, // 50MB
+      icon: 'FileText',
+      label: 'documento PDF',
+    },
+    'documents/indecopi': {
+      accept: accept || 'application/pdf',
+      maxSize: maxSize || 50 * 1024 * 1024, // 50MB
+      icon: 'FileText',
+      label: 'documento PDF',
+    },
+    'documents/publicaciones': {
+      accept: accept || 'application/pdf',
+      maxSize: maxSize || 50 * 1024 * 1024, // 50MB
+      icon: 'FileText',
+      label: 'documento PDF',
+    },
+    images: {
+      accept: accept || 'image/jpeg,image/png,image/webp',
+      maxSize: maxSize || 10 * 1024 * 1024, // 10MB
+      icon: 'Image',
+      label: 'imagen',
+    },
+    'images/estandartes': {
+      accept: accept || 'image/jpeg,image/png,image/webp',
+      maxSize: maxSize || 10 * 1024 * 1024, // 10MB
+      icon: 'Image',
+      label: 'imagen',
+    },
+    'images/comunicados': {
+      accept: accept || 'image/jpeg,image/png,image/webp',
+      maxSize: maxSize || 10 * 1024 * 1024, // 10MB
+      icon: 'Image',
+      label: 'imagen',
+    },
+    'images/publicaciones': {
+      accept: accept || 'image/jpeg,image/png,image/webp',
+      maxSize: maxSize || 10 * 1024 * 1024, // 10MB
+      icon: 'Image',
+      label: 'imagen',
+    },
     hero: {
       accept: accept || 'video/mp4,video/webm,video/quicktime,image/jpeg,image/png,image/webp',
       maxSize: maxSize || 5 * 1024 * 1024 * 1024, // 5GB

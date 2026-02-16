@@ -21,6 +21,8 @@ class Comunicado extends Model
         'extracto',
         'contenido',
         'imagen',
+        'r2_image_key',
+        'r2_image_url',
         'archivos_adjuntos',
         'firmante',
         'cargo_firmante',
@@ -29,6 +31,8 @@ class Comunicado extends Model
         'is_published',
         'is_featured',
     ];
+
+    protected $appends = ['image_url'];
 
     protected $casts = [
         'fecha' => 'date',
@@ -45,6 +49,22 @@ class Comunicado extends Model
         'convocatoria' => 'Convocatoria',
         'pronunciamiento' => 'Pronunciamiento',
     ];
+
+    /**
+     * URL de la imagen (prioriza CDN sobre local)
+     */
+    public function getImageUrlAttribute(): ?string
+    {
+        if ($this->r2_image_url) {
+            return $this->r2_image_url;
+        }
+
+        if ($this->imagen) {
+            return asset('storage/' . $this->imagen);
+        }
+
+        return null;
+    }
 
     /**
      * Verificar si está vigente

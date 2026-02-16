@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Publicacion;
 use App\Models\SiteSetting;
-use App\Services\ImageProcessingService;
 use App\Services\CloudflareMediaService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -15,8 +14,7 @@ use Inertia\Response;
 class PublicacionController extends Controller
 {
     public function __construct(
-        protected ImageProcessingService $imageService,
-        protected CloudflareMediaService $cloudflareService
+        protected CloudflareMediaService $r2Service
     ) {}
 
     public function index(): Response
@@ -46,11 +44,11 @@ class PublicacionController extends Controller
             'isbn' => 'nullable|string|max:50',
             'descripcion' => 'nullable|string',
 
-            // Imagen portada (requerido)
-            'imagen_portada' => 'required|image|max:5120',
+            // Imagen portada (R2 direct-upload)
+            'r2_image_key' => 'required|string',
+            'r2_image_url' => 'required|url',
 
-            // PDF - puede venir como file tradicional O como CDN direct-upload
-            'documento_pdf' => 'nullable|file|mimes:pdf|max:40960',
+            // PDF (R2 direct-upload, opcional)
             'r2_pdf_key' => 'nullable|string',
             'r2_pdf_url' => 'nullable|url',
 
@@ -63,42 +61,7 @@ class PublicacionController extends Controller
             'is_featured' => 'boolean',
         ]);
 
-        // Procesar imagen portada localmente
-        $paths = $this->imageService->process(
-            $request->file('imagen_portada'),
-            'publicaciones'
-        );
-        $validated['imagen_portada'] = $paths['original'];
-
-        // PDF: Prioridad CDN > File tradicional
-        if ($request->r2_pdf_key) {
-            // CDN direct-upload
-            $validated['r2_pdf_key'] = $request->r2_pdf_key;
-            $validated['r2_pdf_url'] = $request->r2_pdf_url;
-            $validated['documento_pdf'] = null;
-        } elseif ($request->hasFile('documento_pdf')) {
-            // File tradicional (local storage)
-            $validated['documento_pdf'] = $request->file('documento_pdf')
-                ->store(config('pandilla.uploads.paths.documents', 'pandilla/documents'), 'public');
-            $validated['r2_pdf_key'] = null;
-            $validated['r2_pdf_url'] = null;
-        }
-
-        // Limpiar campos CDN del array validated (se asignan directamente al modelo)
-        $r2Key = $validated['r2_pdf_key'] ?? null;
-        $r2Url = $validated['r2_pdf_url'] ?? null;
-        unset($validated['r2_pdf_key'], $validated['r2_pdf_url']);
-
-        // Crear el registro
-        $publicacion = new Publicacion($validated);
-
-        // Asignar campos CDN directamente si existen
-        if ($r2Key) {
-            $publicacion->r2_pdf_key = $r2Key;
-            $publicacion->r2_pdf_url = $r2Url;
-        }
-
-        $publicacion->save();
+        Publicacion::create($validated);
 
         return redirect()->route('admin.publicaciones.index')
             ->with('success', 'Publicacion creada correctamente');
@@ -118,11 +81,11 @@ class PublicacionController extends Controller
             'isbn' => 'nullable|string|max:50',
             'descripcion' => 'nullable|string',
 
-            // Imagen portada (opcional en update)
-            'imagen_portada' => 'nullable|image|max:5120',
+            // Imagen portada (R2 direct-upload, opcional en update)
+            'r2_image_key' => 'nullable|string',
+            'r2_image_url' => 'nullable|url',
 
-            // PDF - puede venir como file tradicional O como CDN direct-upload
-            'documento_pdf' => 'nullable|file|mimes:pdf|max:40960',
+            // PDF (R2 direct-upload, opcional)
             'r2_pdf_key' => 'nullable|string',
             'r2_pdf_url' => 'nullable|url',
 
@@ -135,49 +98,17 @@ class PublicacionController extends Controller
             'is_featured' => 'boolean',
         ]);
 
-        // Procesar nueva imagen si se sube
-        if ($request->hasFile('imagen_portada')) {
-            $paths = $this->imageService->process(
-                $request->file('imagen_portada'),
-                'publicaciones',
-                $publicacion->imagen_portada
-            );
-            $validated['imagen_portada'] = $paths['original'];
+        // Si hay nueva imagen en R2, eliminar la anterior
+        if (!empty($validated['r2_image_key']) && $publicacion->r2_image_key) {
+            $this->r2Service->delete($publicacion->r2_image_key);
         }
 
-        // PDF: Prioridad CDN > File tradicional
-        if ($request->r2_pdf_key) {
-            // Nuevo PDF via CDN - eliminar anteriores
-            if ($publicacion->r2_pdf_key) {
-                $this->cloudflareService->delete($publicacion->r2_pdf_key);
-            }
-            if ($publicacion->documento_pdf) {
-                Storage::disk('public')->delete($publicacion->documento_pdf);
-            }
-
-            $publicacion->r2_pdf_key = $request->r2_pdf_key;
-            $publicacion->r2_pdf_url = $request->r2_pdf_url;
-            $publicacion->documento_pdf = null;
-        } elseif ($request->hasFile('documento_pdf')) {
-            // Nuevo PDF via file tradicional - eliminar anteriores
-            if ($publicacion->r2_pdf_key) {
-                $this->cloudflareService->delete($publicacion->r2_pdf_key);
-                $publicacion->r2_pdf_key = null;
-                $publicacion->r2_pdf_url = null;
-            }
-            if ($publicacion->documento_pdf) {
-                Storage::disk('public')->delete($publicacion->documento_pdf);
-            }
-
-            $validated['documento_pdf'] = $request->file('documento_pdf')
-                ->store(config('pandilla.uploads.paths.documents', 'pandilla/documents'), 'public');
+        // Si hay nuevo PDF en R2, eliminar el anterior
+        if (!empty($validated['r2_pdf_key']) && $publicacion->r2_pdf_key) {
+            $this->r2Service->delete($publicacion->r2_pdf_key);
         }
 
-        // Limpiar campos CDN del array validated
-        unset($validated['r2_pdf_key'], $validated['r2_pdf_url']);
-
-        $publicacion->fill($validated);
-        $publicacion->save();
+        $publicacion->update($validated);
 
         return redirect()->route('admin.publicaciones.index')
             ->with('success', 'Publicacion actualizada correctamente');
@@ -185,19 +116,14 @@ class PublicacionController extends Controller
 
     public function destroy(Publicacion $publicacion)
     {
-        // Eliminar imagen portada
-        if ($publicacion->imagen_portada) {
-            $this->imageService->delete($publicacion->imagen_portada, 'publicaciones');
+        // Eliminar imagen de R2
+        if ($publicacion->r2_image_key) {
+            $this->r2Service->delete($publicacion->r2_image_key);
         }
 
-        // Eliminar PDF de CDN
+        // Eliminar PDF de R2
         if ($publicacion->r2_pdf_key) {
-            $this->cloudflareService->delete($publicacion->r2_pdf_key);
-        }
-
-        // Eliminar PDF local (legacy)
-        if ($publicacion->documento_pdf) {
-            Storage::disk('public')->delete($publicacion->documento_pdf);
+            $this->r2Service->delete($publicacion->r2_pdf_key);
         }
 
         $publicacion->delete();

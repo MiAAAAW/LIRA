@@ -18,6 +18,9 @@ RUN apk add --no-cache \
     git \
     curl \
     libpng-dev \
+    libjpeg-turbo-dev \
+    libwebp-dev \
+    freetype-dev \
     libxml2-dev \
     zip \
     unzip \
@@ -25,6 +28,9 @@ RUN apk add --no-cache \
     sqlite-dev \
     postgresql-dev \
     linux-headers
+
+# Configurar GD con soporte JPEG, WebP y Freetype
+RUN docker-php-ext-configure gd --with-jpeg --with-webp --with-freetype
 
 # Compilamos TODAS las extensiones necesarias UNA SOLA VEZ
 RUN docker-php-ext-install pdo pdo_mysql pdo_sqlite pdo_pgsql mbstring exif pcntl bcmath gd opcache
@@ -49,6 +55,9 @@ RUN apk add --no-cache \
     nginx \
     supervisor \
     libpng \
+    libjpeg-turbo \
+    libwebp \
+    freetype \
     oniguruma \
     sqlite-libs \
     libpq \

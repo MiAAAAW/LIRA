@@ -5,13 +5,17 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Comunicado;
 use App\Models\SiteSetting;
+use App\Services\CloudflareMediaService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class ComunicadoController extends Controller
 {
+    public function __construct(
+        protected CloudflareMediaService $r2Service
+    ) {}
+
     public function index(): Response
     {
         $items = Comunicado::orderByDesc('fecha')
@@ -33,7 +37,8 @@ class ComunicadoController extends Controller
             'fecha' => 'required|date',
             'extracto' => 'nullable|string|max:500',
             'contenido' => 'required|string',
-            'imagen' => 'nullable|image|max:5120',
+            'r2_image_key' => 'nullable|string',
+            'r2_image_url' => 'nullable|url',
             'firmante' => 'nullable|string|max:255',
             'cargo_firmante' => 'nullable|string|max:255',
             'fecha_vigencia' => 'nullable|date',
@@ -45,11 +50,6 @@ class ComunicadoController extends Controller
         // Auto-generar extracto desde contenido si no viene
         if (empty($validated['extracto'])) {
             $validated['extracto'] = mb_substr(strip_tags($validated['contenido']), 0, 500);
-        }
-
-        if ($request->hasFile('imagen')) {
-            $validated['imagen'] = $request->file('imagen')
-                ->store(config('pandilla.uploads.paths.images'), 'public');
         }
 
         // Solo 1 destacado a la vez
@@ -62,6 +62,7 @@ class ComunicadoController extends Controller
         return redirect()->route('admin.comunicados.index')
             ->with('success', 'Comunicado creado correctamente');
     }
+
     public function update(Request $request, Comunicado $comunicado)
     {
         $validated = $request->validate([
@@ -71,7 +72,8 @@ class ComunicadoController extends Controller
             'fecha' => 'required|date',
             'extracto' => 'nullable|string|max:500',
             'contenido' => 'required|string',
-            'imagen' => 'nullable|image|max:5120',
+            'r2_image_key' => 'nullable|string',
+            'r2_image_url' => 'nullable|url',
             'firmante' => 'nullable|string|max:255',
             'cargo_firmante' => 'nullable|string|max:255',
             'fecha_vigencia' => 'nullable|date',
@@ -85,12 +87,9 @@ class ComunicadoController extends Controller
             $validated['extracto'] = mb_substr(strip_tags($validated['contenido']), 0, 500);
         }
 
-        if ($request->hasFile('imagen')) {
-            if ($comunicado->imagen) {
-                Storage::disk('public')->delete($comunicado->imagen);
-            }
-            $validated['imagen'] = $request->file('imagen')
-                ->store(config('pandilla.uploads.paths.images'), 'public');
+        // Si hay nueva imagen en R2, eliminar la anterior
+        if (!empty($validated['r2_image_key']) && $comunicado->r2_image_key) {
+            $this->r2Service->delete($comunicado->r2_image_key);
         }
 
         // Solo 1 destacado a la vez
@@ -108,6 +107,10 @@ class ComunicadoController extends Controller
 
     public function destroy(Comunicado $comunicado)
     {
+        if ($comunicado->r2_image_key) {
+            $this->r2Service->delete($comunicado->r2_image_key);
+        }
+
         $comunicado->delete();
 
         return redirect()->route('admin.comunicados.index')

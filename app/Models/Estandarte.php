@@ -23,6 +23,8 @@ class Estandarte extends Model
         'descripcion',
         'historia',
         'imagen_principal',
+        'r2_image_key',
+        'r2_image_url',
         'galeria',
         'dimensiones',
         'materiales',

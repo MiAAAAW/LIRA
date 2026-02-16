@@ -45,10 +45,13 @@ export default function Index({ items, sectionVisible }) {
     {
       name: 'documento_pdf',
       label: 'Documento PDF',
-      type: 'file',
-      accept: '.pdf',
+      type: 'direct-upload',
+      uploadType: 'documents/ley24325',
+      keyField: 'r2_pdf_key',
+      urlField: 'r2_pdf_url',
       required: true,
-      helpText: 'El PDF oficial contiene todo el detalle de la ley',
+      fullWidth: true,
+      helpText: 'Max 50MB. Subida directa a CDN.',
     },
   ];
 

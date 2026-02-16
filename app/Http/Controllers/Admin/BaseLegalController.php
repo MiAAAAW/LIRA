@@ -5,13 +5,17 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\BaseLegal;
 use App\Models\SiteSetting;
+use App\Services\CloudflareMediaService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class BaseLegalController extends Controller
 {
+    public function __construct(
+        protected CloudflareMediaService $r2Service
+    ) {}
+
     public function index(): Response
     {
         $items = BaseLegal::orderBy('orden')
@@ -32,15 +36,11 @@ class BaseLegalController extends Controller
             'tipo_documento' => 'required|string',
             'numero_documento' => 'nullable|string|max:100',
             'fecha_emision' => 'nullable|date',
-            'documento_pdf' => 'required|file|mimes:pdf|max:10240',
+            'r2_pdf_key' => 'required|string',
+            'r2_pdf_url' => 'required|url',
             'orden' => 'nullable|integer',
             'is_published' => 'boolean',
         ]);
-
-        if ($request->hasFile('documento_pdf')) {
-            $validated['documento_pdf'] = $request->file('documento_pdf')
-                ->store(config('pandilla.uploads.paths.documents'), 'public');
-        }
 
         BaseLegal::create($validated);
 
@@ -55,17 +55,15 @@ class BaseLegalController extends Controller
             'tipo_documento' => 'required|string',
             'numero_documento' => 'nullable|string|max:100',
             'fecha_emision' => 'nullable|date',
-            'documento_pdf' => 'nullable|file|mimes:pdf|max:10240',
+            'r2_pdf_key' => 'nullable|string',
+            'r2_pdf_url' => 'nullable|url',
             'orden' => 'nullable|integer',
             'is_published' => 'boolean',
         ]);
 
-        if ($request->hasFile('documento_pdf')) {
-            if ($baseLegal->documento_pdf) {
-                Storage::disk('public')->delete($baseLegal->documento_pdf);
-            }
-            $validated['documento_pdf'] = $request->file('documento_pdf')
-                ->store(config('pandilla.uploads.paths.documents'), 'public');
+        // Si hay nuevo PDF en R2, eliminar el anterior
+        if (!empty($validated['r2_pdf_key']) && $baseLegal->r2_pdf_key) {
+            $this->r2Service->delete($baseLegal->r2_pdf_key);
         }
 
         $baseLegal->update($validated);
@@ -76,6 +74,10 @@ class BaseLegalController extends Controller
 
     public function destroy(BaseLegal $baseLegal)
     {
+        if ($baseLegal->r2_pdf_key) {
+            $this->r2Service->delete($baseLegal->r2_pdf_key);
+        }
+
         $baseLegal->delete();
 
         return redirect()->route('admin.base-legal.index')
