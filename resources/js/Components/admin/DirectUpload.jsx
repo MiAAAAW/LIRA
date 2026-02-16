@@ -180,7 +180,7 @@ export default function DirectUpload({
 
       if (!presignedResponse.ok) {
         const errorData = await presignedResponse.json();
-        throw new Error(errorData.error || 'Error al obtener URL de upload');
+        throw new Error(errorData.error || errorData.message || 'Error al obtener URL de upload');
       }
 
       const { key, uploadUrl, publicUrl } = await presignedResponse.json();
