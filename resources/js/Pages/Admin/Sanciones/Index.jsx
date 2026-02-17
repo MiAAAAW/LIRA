@@ -56,7 +56,11 @@ export default function Index({ items, miembros }) {
     {
       key: 'fecha',
       label: 'Fecha',
-      render: (value) => value ? new Date(value).toLocaleDateString('es-PE') : '—',
+      render: (value) => {
+        if (!value) return '—';
+        const [y, m, d] = String(value).split('T')[0].split('-').map(Number);
+        return new Date(y, m - 1, d).toLocaleDateString('es-PE');
+      },
     },
   ];
 

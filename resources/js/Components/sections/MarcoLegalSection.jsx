@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { Badge } from '@/Components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
 import { Button } from '@/Components/ui/button';
+import { PdfViewer } from '@/Components/ui/pdf-viewer';
 import { MotionWrapper, StaggerContainer, StaggerItem } from '@/Components/motion/MotionWrapper';
 
 const iconMap = {
@@ -68,12 +69,12 @@ function ContentCard({ item, type, icon: Icon }) {
             </p>
             {item.fecha_promulgacion && (
               <p className="text-xs text-muted-foreground">
-                Promulgada: {new Date(item.fecha_promulgacion).toLocaleDateString('es-PE')}
+                Promulgada: {(() => { const [y,m,d] = String(item.fecha_promulgacion).split('T')[0].split('-').map(Number); return new Date(y,m-1,d).toLocaleDateString('es-PE'); })()}
               </p>
             )}
             {item.fecha_emision && (
               <p className="text-xs text-muted-foreground">
-                Emitido: {new Date(item.fecha_emision).toLocaleDateString('es-PE')}
+                Emitido: {(() => { const [y,m,d] = String(item.fecha_emision).split('T')[0].split('-').map(Number); return new Date(y,m-1,d).toLocaleDateString('es-PE'); })()}
               </p>
             )}
             {item.entidad_emisora && (
@@ -97,10 +98,11 @@ function ContentCard({ item, type, icon: Icon }) {
         {hasPdf && (
           <div className="p-4 lg:p-6 lg:pl-0">
             <div className="rounded-xl overflow-hidden border bg-muted/20 shadow-inner">
-              <iframe
-                src={`${pdfUrl}#toolbar=1&navpanes=0&scrollbar=1&view=FitH`}
+              <PdfViewer
+                url={pdfUrl}
+                title={item.titulo}
                 className="w-full h-[500px] lg:h-[600px]"
-                title={`PDF: ${item.titulo}`}
+                toolbar
               />
             </div>
           </div>

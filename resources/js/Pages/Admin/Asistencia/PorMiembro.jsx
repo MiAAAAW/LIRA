@@ -111,11 +111,7 @@ export default function PorMiembro({ miembro, asistencias, stats, totalEventos }
                           <>
                             <span>·</span>
                             <span>
-                              {new Date(a.evento.fecha).toLocaleDateString('es-PE', {
-                                day: 'numeric',
-                                month: 'short',
-                                year: 'numeric',
-                              })}
+                              {(() => { const [y,m,d] = String(a.evento.fecha).split('T')[0].split('-').map(Number); return new Date(y,m-1,d).toLocaleDateString('es-PE', { day: 'numeric', month: 'short', year: 'numeric' }); })()}
                             </span>
                           </>
                         )}

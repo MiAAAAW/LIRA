@@ -150,12 +150,15 @@ export function AsistenciaContent({ evento, initialMiembros, initialAsistencias,
     }
   }, [evento.id, isListaCerrada]);
 
-  const fechaFormatted = new Date(evento.fecha).toLocaleDateString('es-PE', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
+  const fechaFormatted = (() => {
+    const [y, m, d] = String(evento.fecha).split('T')[0].split('-').map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString('es-PE', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+  })();
 
   return (
     <div className="mx-auto max-w-3xl space-y-3">

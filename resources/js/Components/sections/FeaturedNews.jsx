@@ -18,7 +18,8 @@ import { MotionWrapper, StaggerContainer, StaggerItem } from '@/Components/motio
 function formatDate(dateString) {
   if (!dateString) return 'Sin fecha';
   try {
-    return new Date(dateString).toLocaleDateString('es-ES', {
+    const [y, m, d] = String(dateString).split('T')[0].split('-').map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString('es-ES', {
       day: 'numeric',
       month: 'short',
       year: 'numeric',

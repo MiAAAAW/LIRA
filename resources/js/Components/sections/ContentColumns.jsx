@@ -12,6 +12,7 @@ import {
   ChevronLeft, ChevronRight, ExternalLink, Volume2, VolumeX, Loader2
 } from 'lucide-react';
 import { useMediaContext, useVideoContext } from '@/contexts/MediaContext';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { cn, storageUrl } from '@/lib/utils';
 import { Badge } from '@/Components/ui/badge';
 import { Button } from '@/Components/ui/button';
@@ -50,6 +51,7 @@ import {
   DialogDescription,
 } from '@/Components/ui/dialog';
 import { ImageLightbox } from '@/Components/ui/image-lightbox';
+import { PdfViewer } from '@/Components/ui/pdf-viewer';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CONSTANTS - Valores configurables (extraer a config/i18n si necesario)
@@ -95,20 +97,6 @@ const getInitials = (name) => name?.split(' ').map(n => n[0]).join('').toUpperCa
 const PDFFullscreenModal = React.memo(function PDFFullscreenModal({
   doc, isOpen, onClose, icon: Icon
 }) {
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [isMobile, setIsMobile] = React.useState(false);
-
-  React.useEffect(() => {
-    if (isOpen) setIsLoading(true);
-  }, [isOpen, doc?.id]);
-
-  React.useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
   if (!doc) return null;
 
   const pdfUrl = doc.pdf_url || doc.documento_pdf || doc.certificado_pdf;
@@ -145,21 +133,12 @@ const PDFFullscreenModal = React.memo(function PDFFullscreenModal({
             </div>
           </div>
         </DialogHeader>
-        <div className="flex-1 min-h-0 relative bg-muted/20">
-          {isLoading && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/90">
-              <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-            </div>
-          )}
-          <iframe
-            src={isMobile
-              ? `https://docs.google.com/viewer?url=${encodeURIComponent(pdfUrl)}&embedded=true`
-              : `${pdfUrl}#toolbar=1&navpanes=0&scrollbar=1&view=FitH`
-            }
-            className="w-full h-full border-0"
-            title={`PDF: ${doc.titulo}`}
-            style={{ colorScheme: 'light' }}
-            onLoad={() => setIsLoading(false)}
+        <div className="flex-1 min-h-0 bg-muted/20">
+          <PdfViewer
+            url={pdfUrl}
+            title={doc.titulo}
+            className="w-full h-full"
+            toolbar
           />
         </div>
       </DialogContent>
@@ -170,31 +149,20 @@ const PDFFullscreenModal = React.memo(function PDFFullscreenModal({
 // Visor de documentos con PREVIEW VISIBLE
 const DocumentViewer = React.memo(function DocumentViewer({ documents, icon: Icon }) {
   const [activeIndex, setActiveIndex] = React.useState(0);
-  const [isLoading, setIsLoading] = React.useState(true);
   const [isFullscreen, setIsFullscreen] = React.useState(false);
-  const [isMobile, setIsMobile] = React.useState(false);
-
-  React.useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+  const isMobile = useIsMobile();
 
   const totalDocs = documents?.length || 0;
 
   const goToPrev = React.useCallback(() => {
-    setIsLoading(true);
     setActiveIndex(prev => (prev === 0 ? totalDocs - 1 : prev - 1));
   }, [totalDocs]);
 
   const goToNext = React.useCallback(() => {
-    setIsLoading(true);
     setActiveIndex(prev => (prev === totalDocs - 1 ? 0 : prev + 1));
   }, [totalDocs]);
 
   const goToIndex = React.useCallback((index) => {
-    setIsLoading(true);
     setActiveIndex(index);
   }, []);
 
@@ -212,23 +180,15 @@ const DocumentViewer = React.memo(function DocumentViewer({ documents, icon: Ico
     <>
       <Card className="border-border/50 overflow-hidden">
         {/* Header con info del documento */}
-        <div className="flex items-center justify-between gap-3 p-3 border-b border-border/50 bg-muted/30">
+        <div className="flex items-center justify-between gap-2 p-3 border-b border-border/50 bg-muted/30">
           <div className="flex items-center gap-2 min-w-0 flex-1">
             <div className="p-1.5 rounded-md bg-primary/10 shrink-0">
               <Icon className="h-4 w-4 text-primary" />
             </div>
-            <div className="min-w-0 flex-1">
-              <h4 className="font-semibold text-sm line-clamp-1">{activeDoc.titulo}</h4>
-              <p className="text-xs text-muted-foreground line-clamp-1">{activeDoc.descripcion}</p>
-            </div>
+            <h4 className="font-semibold text-sm line-clamp-1 min-w-0">{activeDoc.titulo}</h4>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            {numero && (
-              <Badge variant="secondary" className="font-mono text-xs hidden sm:inline-flex">
-                {numero}
-              </Badge>
-            )}
-            {hasPdf && (
+          <div className="flex items-center gap-1 shrink-0">
+            {hasPdf && !isMobile && (
               <>
                 <Button
                   variant="ghost"
@@ -248,50 +208,21 @@ const DocumentViewer = React.memo(function DocumentViewer({ documents, icon: Ico
               </>
             )}
             {totalDocs > 1 && (
-              <Badge variant="outline">{activeIndex + 1}/{totalDocs}</Badge>
+              <Badge variant="outline" className="text-xs">{activeIndex + 1}/{totalDocs}</Badge>
             )}
           </div>
         </div>
 
         {/* PREVIEW DEL PDF - Visible como "hoja" */}
-        <div className="relative bg-muted/10 h-[500px] sm:h-[500px] md:h-[600px]">
+        <div className="bg-muted/10 h-[350px] sm:h-[500px] md:h-[600px]">
           {hasPdf ? (
-            isMobile ? (
-              // En mobile: botón para abrir PDF (iframes no funcionan bien)
-              <div className="h-full flex flex-col items-center justify-center gap-4 p-6">
-                <div className="p-4 rounded-full bg-primary/10">
-                  <FileIcon className="h-12 w-12 text-primary" />
-                </div>
-                <div className="text-center">
-                  <p className="text-sm font-medium mb-1">{activeDoc.titulo}</p>
-                  <p className="text-xs text-muted-foreground line-clamp-2">{activeDoc.descripcion}</p>
-                </div>
-                <Button asChild className="mt-2">
-                  <a href={pdfUrl} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                    Ver PDF
-                  </a>
-                </Button>
-              </div>
-            ) : (
-              // En desktop: iframe normal
-              <>
-                {isLoading && (
-                  <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/90">
-                    <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                  </div>
-                )}
-                <iframe
-                  key={activeDoc.id}
-                  src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`}
-                  className="w-full h-full border-0"
-                  title={`PDF: ${activeDoc.titulo}`}
-                  style={{ colorScheme: 'light' }}
-                  loading="lazy"
-                  onLoad={() => setIsLoading(false)}
-                />
-              </>
-            )
+            <PdfViewer
+              url={pdfUrl}
+              title={activeDoc.titulo}
+              className="w-full h-full"
+              toolbar={false}
+              iframeKey={activeDoc.id}
+            />
           ) : (
             <div className="h-full flex items-center justify-center">
               <div className="text-center text-muted-foreground">
@@ -1231,9 +1162,7 @@ const DistincionCard = React.memo(function DistincionCard({ item, onViewPdf }) {
               {item.fecha_otorgamiento && (
                 <p className="text-xs text-muted-foreground flex items-center gap-1">
                   <Calendar className="h-3 w-3" />
-                  {new Date(item.fecha_otorgamiento).toLocaleDateString(DATE_LOCALE, {
-                    year: 'numeric'
-                  })}
+                  {(() => { const [y,m,d] = String(item.fecha_otorgamiento).split('T')[0].split('-').map(Number); return new Date(y,m-1,d).toLocaleDateString(DATE_LOCALE, { year: 'numeric' }); })()}
                 </p>
               )}
               {item.pdf_url && (
@@ -1258,12 +1187,6 @@ const DistincionCard = React.memo(function DistincionCard({ item, onViewPdf }) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const DistincionPdfModal = React.memo(function DistincionPdfModal({ item, isOpen, onClose }) {
-  const [isLoading, setIsLoading] = React.useState(true);
-
-  React.useEffect(() => {
-    if (isOpen) setIsLoading(true);
-  }, [isOpen, item?.id]);
-
   if (!item) return null;
 
   const pdfUrl = item.pdf_url;
@@ -1284,7 +1207,7 @@ const DistincionPdfModal = React.memo(function DistincionPdfModal({ item, isOpen
                 </Badge>
                 {item.fecha_otorgamiento && (
                   <span className="text-xs text-muted-foreground">
-                    {new Date(item.fecha_otorgamiento).getFullYear()}
+                    {String(item.fecha_otorgamiento).split('T')[0].split('-')[0]}
                   </span>
                 )}
               </div>
@@ -1309,18 +1232,12 @@ const DistincionPdfModal = React.memo(function DistincionPdfModal({ item, isOpen
             </div>
           </div>
         </DialogHeader>
-        <div className="flex-1 min-h-0 relative bg-muted/20">
-          {isLoading && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/90">
-              <div className="h-8 w-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
-            </div>
-          )}
-          <iframe
-            src={`${pdfUrl}#toolbar=1&navpanes=0&scrollbar=1&view=FitH`}
-            className="w-full h-full border-0"
-            title={`PDF: ${item.titulo}`}
-            style={{ colorScheme: 'light' }}
-            onLoad={() => setIsLoading(false)}
+        <div className="flex-1 min-h-0 bg-muted/20">
+          <PdfViewer
+            url={pdfUrl}
+            title={item.titulo}
+            className="w-full h-full"
+            toolbar
           />
         </div>
       </DialogContent>
@@ -1677,20 +1594,6 @@ const PublicacionCard = React.memo(function PublicacionCard({ item, onClick }) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const PublicacionPdfModal = React.memo(function PublicacionPdfModal({ item, isOpen, onClose }) {
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [isMobile, setIsMobile] = React.useState(false);
-
-  React.useEffect(() => {
-    if (isOpen) setIsLoading(true);
-  }, [isOpen, item?.id]);
-
-  React.useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
   if (!item) return null;
 
   const imageUrl = item.image_url || storageUrl(item.imagen_portada);
@@ -1751,25 +1654,14 @@ const PublicacionPdfModal = React.memo(function PublicacionPdfModal({ item, isOp
           </div>
         </DialogHeader>
 
-        <div className="flex-1 min-h-0 relative">
+        <div className="flex-1 min-h-0">
           {pdfUrl ? (
-            <>
-              {isLoading && (
-                <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/90">
-                  <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                </div>
-              )}
-              <iframe
-                src={isMobile
-                  ? `https://docs.google.com/viewer?url=${encodeURIComponent(pdfUrl)}&embedded=true`
-                  : `${pdfUrl}#toolbar=1&navpanes=0&scrollbar=1&view=FitH`
-                }
-                className="w-full h-full border-0"
-                title={`PDF: ${item.titulo}`}
-                style={{ colorScheme: 'light' }}
-                onLoad={() => setIsLoading(false)}
-              />
-            </>
+            <PdfViewer
+              url={pdfUrl}
+              title={item.titulo}
+              className="w-full h-full"
+              toolbar
+            />
           ) : (
             <div className="p-6 space-y-4">
               {imageUrl && (
@@ -1893,7 +1785,7 @@ const ComunicadoCard = React.memo(function ComunicadoCard({ item, onClick }) {
           {item.fecha && (
             <span className="text-xs text-muted-foreground flex items-center gap-1">
               <Calendar className="h-3 w-3" />
-              {new Date(item.fecha).toLocaleDateString(DATE_LOCALE)}
+              {(() => { const [y,m,d] = String(item.fecha).split('T')[0].split('-').map(Number); return new Date(y,m-1,d).toLocaleDateString(DATE_LOCALE); })()}
             </span>
           )}
         </div>
@@ -1945,7 +1837,7 @@ const ComunicadoModal = React.memo(function ComunicadoModal({ item, isOpen, onCl
                 {item.fecha && (
                   <span className="text-xs text-muted-foreground flex items-center gap-1">
                     <Calendar className="h-3 w-3" />
-                    {new Date(item.fecha).toLocaleDateString(DATE_LOCALE, { year: 'numeric', month: 'long', day: 'numeric' })}
+                    {(() => { const [y,m,d] = String(item.fecha).split('T')[0].split('-').map(Number); return new Date(y,m-1,d).toLocaleDateString(DATE_LOCALE, { year: 'numeric', month: 'long', day: 'numeric' }); })()}
                   </span>
                 )}
               </div>

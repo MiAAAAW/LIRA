@@ -179,8 +179,22 @@ export default function DirectUpload({
       });
 
       if (!presignedResponse.ok) {
-        const errorData = await presignedResponse.json();
-        throw new Error(errorData.error || errorData.message || 'Error al obtener URL de upload');
+        // 419 = sesión expirada (CSRF), 503 = R2 no configurado
+        if (presignedResponse.status === 419) {
+          throw new Error('Sesión expirada. Recarga la página e intenta de nuevo.');
+        }
+        if (presignedResponse.status === 503) {
+          throw new Error('Servicio de almacenamiento no configurado. Contacta al administrador.');
+        }
+        try {
+          const errorData = await presignedResponse.json();
+          throw new Error(errorData.error || errorData.message || 'Error al obtener URL de upload');
+        } catch (parseErr) {
+          if (parseErr.message.includes('Sesión') || parseErr.message.includes('Servicio') || parseErr.message.includes('Error al')) {
+            throw parseErr;
+          }
+          throw new Error(`Error del servidor (${presignedResponse.status}). Recarga la página.`);
+        }
       }
 
       const { key, uploadUrl, publicUrl } = await presignedResponse.json();

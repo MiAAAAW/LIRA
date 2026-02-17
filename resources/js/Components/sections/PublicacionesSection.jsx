@@ -3,12 +3,13 @@
  * @description Displays Publicaciones, Comunicados, and Distinciones
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Newspaper, Megaphone, Award, Calendar, User, ExternalLink, Download, FileText, BookOpen } from 'lucide-react';
 import { cn, storageUrl } from '@/lib/utils';
 import { Badge } from '@/Components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
 import { Button } from '@/Components/ui/button';
+import { PdfViewer } from '@/Components/ui/pdf-viewer';
 import {
   Dialog,
   DialogContent,
@@ -28,7 +29,8 @@ import { MotionWrapper, StaggerContainer, StaggerItem } from '@/Components/motio
 function formatDate(dateString) {
   if (!dateString) return null;
   try {
-    return new Date(dateString).toLocaleDateString('es-PE', {
+    const [y, m, d] = String(dateString).split('T')[0].split('-').map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString('es-PE', {
       day: 'numeric',
       month: 'long',
       year: 'numeric',
@@ -100,69 +102,78 @@ function PublicacionModal({ item, open, onOpenChange }) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle className="text-xl">{item.titulo}</DialogTitle>
-          <DialogDescription className="flex items-center gap-2 flex-wrap">
-            {item.tipo && <Badge className="capitalize">{item.tipo}</Badge>}
-            {item.autor && <span>{item.autor}</span>}
-            {item.anio_publicacion && <span>· {item.anio_publicacion}</span>}
-            {item.editorial && <span>· {item.editorial}</span>}
-          </DialogDescription>
+      <DialogContent className="max-w-6xl w-[95vw] h-[90vh] flex flex-col p-0 gap-0">
+        <DialogHeader className="p-4 pb-3 border-b shrink-0">
+          <div className="flex items-start gap-3 pr-8">
+            <div className="min-w-0 flex-1">
+              <DialogTitle className="text-lg line-clamp-1">{item.titulo}</DialogTitle>
+              <DialogDescription className="flex items-center gap-2 flex-wrap mt-1">
+                {item.tipo && <Badge className="capitalize">{item.tipo}</Badge>}
+                {item.autor && <span>{item.autor}</span>}
+                {item.anio_publicacion && <span>· {item.anio_publicacion}</span>}
+                {item.editorial && <span>· {item.editorial}</span>}
+              </DialogDescription>
+            </div>
+            <div className="flex gap-2 shrink-0">
+              {pdfUrl && (
+                <Button variant="outline" size="sm" asChild>
+                  <a href={pdfUrl} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-4 w-4 mr-1" />
+                    <span className="hidden sm:inline">Abrir</span>
+                  </a>
+                </Button>
+              )}
+              {pdfUrl && (
+                <Button variant="outline" size="sm" asChild>
+                  <a href={pdfUrl} download>
+                    <Download className="h-4 w-4 mr-1" />
+                    <span className="hidden sm:inline">Descargar</span>
+                  </a>
+                </Button>
+              )}
+              {externalUrl && !pdfUrl && (
+                <Button variant="outline" size="sm" asChild>
+                  <a href={externalUrl} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-4 w-4 mr-1" />
+                    Ver enlace
+                  </a>
+                </Button>
+              )}
+            </div>
+          </div>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto min-h-0">
+        <div className="flex-1 min-h-0 overflow-y-auto">
           {/* PDF Viewer */}
           {pdfUrl ? (
-            <div className="w-full h-[60vh] rounded-lg overflow-hidden border bg-muted">
-              <iframe
-                src={pdfUrl}
-                title={item.titulo}
-                className="w-full h-full"
-              />
-            </div>
+            <PdfViewer
+              url={pdfUrl}
+              title={item.titulo}
+              className="w-full h-full"
+              toolbar
+            />
           ) : imageUrl ? (
-            <div className="flex justify-center">
+            <div className="flex justify-center p-4">
               <img
                 src={imageUrl}
                 alt={item.titulo}
-                className="max-h-[50vh] rounded-lg object-contain"
+                className="max-h-[60vh] rounded-lg object-contain"
               />
             </div>
           ) : null}
 
-          {/* Descripcion */}
-          {item.descripcion && (
-            <p className="text-muted-foreground mt-4">
-              {item.descripcion}
-            </p>
-          )}
-
-          {/* ISBN */}
-          {item.isbn && (
-            <p className="text-sm text-muted-foreground mt-2">
-              <span className="font-medium">ISBN:</span> {item.isbn}
-            </p>
-          )}
-        </div>
-
-        {/* Actions */}
-        <div className="flex items-center gap-3 pt-4 border-t flex-shrink-0">
-          {pdfUrl && (
-            <Button asChild>
-              <a href={pdfUrl} target="_blank" rel="noopener noreferrer">
-                <Download className="mr-2 h-4 w-4" />
-                Descargar PDF
-              </a>
-            </Button>
-          )}
-          {externalUrl && (
-            <Button variant="outline" asChild>
-              <a href={externalUrl} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="mr-2 h-4 w-4" />
-                Ver enlace
-              </a>
-            </Button>
+          {/* Descripcion + ISBN */}
+          {(item.descripcion || item.isbn) && (
+            <div className="p-4 border-t">
+              {item.descripcion && (
+                <p className="text-muted-foreground">{item.descripcion}</p>
+              )}
+              {item.isbn && (
+                <p className="text-sm text-muted-foreground mt-2">
+                  <span className="font-medium">ISBN:</span> {item.isbn}
+                </p>
+              )}
+            </div>
           )}
         </div>
       </DialogContent>

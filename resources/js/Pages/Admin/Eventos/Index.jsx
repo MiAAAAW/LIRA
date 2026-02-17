@@ -67,7 +67,8 @@ export default function Index({ items }) {
       label: 'Fecha',
       render: (value) => {
         if (!value) return '—';
-        return new Date(value).toLocaleDateString('es-PE', {
+        const [y, m, d] = String(value).split('T')[0].split('-').map(Number);
+        return new Date(y, m - 1, d).toLocaleDateString('es-PE', {
           weekday: 'short',
           day: 'numeric',
           month: 'short',
