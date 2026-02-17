@@ -9,10 +9,10 @@ import {
   Scale, FileText, Shield, Flag, Users,
   Video, Music, Award, Newspaper, Megaphone,
   Play, Pause, Download, Calendar, User, FileIcon, GripVertical,
-  ChevronLeft, ChevronRight, ExternalLink, Volume2, VolumeX, Loader2
+  ChevronLeft, ChevronRight, ExternalLink, Volume2, VolumeX, Loader2,
+  MoreVertical, Maximize2
 } from 'lucide-react';
 import { useMediaContext, useVideoContext } from '@/contexts/MediaContext';
-import { useIsMobile } from '@/hooks/use-mobile';
 import { cn, storageUrl } from '@/lib/utils';
 import { Badge } from '@/Components/ui/badge';
 import { Button } from '@/Components/ui/button';
@@ -52,6 +52,8 @@ import {
 } from '@/Components/ui/dialog';
 import { ImageLightbox } from '@/Components/ui/image-lightbox';
 import { PdfViewer } from '@/Components/ui/pdf-viewer';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/Components/ui/dropdown-menu';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/Components/ui/select';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CONSTANTS - Valores configurables (extraer a config/i18n si necesario)
@@ -66,6 +68,7 @@ const DRAG_Z_INDEX = 50;
 const DRAG_OPACITY = 0.8;
 const DRAG_SCALE = 1.02;
 const PANEL_MAX_HEIGHT = 600; // px - altura máxima para paneles con scroll
+const DOCUMENT_RENDER_TYPES = ['reorderable-documents', 'documents', 'documents-shield'];
 
 // i18n strings (extraer a archivo de traducciones si necesario)
 const STRINGS = {
@@ -81,6 +84,7 @@ const STRINGS = {
   sectionTitle: '', // from config.columns.title
   sectionSubtitle: '', // from config.columns.subtitle
   docNavLabel: 'Navegación de documentos',
+  viewLink: 'Ver enlace',
 };
 
 // Utils
@@ -120,14 +124,14 @@ const PDFFullscreenModal = React.memo(function PDFFullscreenModal({
             <div className="flex gap-2 shrink-0">
               <Button variant="outline" size="sm" asChild>
                 <a href={pdfUrl} target="_blank" rel="noopener noreferrer" aria-label={STRINGS.newTab}>
-                  <ExternalLink className="h-4 w-4 mr-1" />
-                  {STRINGS.newTab}
+                  <ExternalLink className="h-4 w-4 sm:mr-1" />
+                  <span className="hidden sm:inline">{STRINGS.newTab}</span>
                 </a>
               </Button>
               <Button variant="outline" size="sm" asChild>
                 <a href={pdfUrl} download aria-label={STRINGS.download}>
-                  <Download className="h-4 w-4 mr-1" />
-                  {STRINGS.download}
+                  <Download className="h-4 w-4 sm:mr-1" />
+                  <span className="hidden sm:inline">{STRINGS.download}</span>
                 </a>
               </Button>
             </div>
@@ -150,7 +154,6 @@ const PDFFullscreenModal = React.memo(function PDFFullscreenModal({
 const DocumentViewer = React.memo(function DocumentViewer({ documents, icon: Icon }) {
   const [activeIndex, setActiveIndex] = React.useState(0);
   const [isFullscreen, setIsFullscreen] = React.useState(false);
-  const isMobile = useIsMobile();
 
   const totalDocs = documents?.length || 0;
 
@@ -174,59 +177,90 @@ const DocumentViewer = React.memo(function DocumentViewer({ documents, icon: Ico
   const activeDoc = documents[activeIndex];
   const pdfUrl = activeDoc?.pdf_url || activeDoc?.documento_pdf || activeDoc?.certificado_pdf;
   const hasPdf = !!pdfUrl;
-  const numero = activeDoc?.numero_ley || activeDoc?.numero_documento || activeDoc?.numero_registro;
 
   return (
     <>
       <Card className="border-border/50 overflow-hidden">
-        {/* Header con info del documento + navegación */}
-        <div className="flex items-center justify-between gap-2 p-3 border-b border-border/50 bg-muted/30">
+        {/* Header con info del documento + acciones dropdown + navegación */}
+        <div className="flex items-center gap-2 p-3 border-b border-border/50 bg-muted/30">
+          {/* Left: icon + title */}
           <div className="flex items-center gap-2 min-w-0 flex-1">
             <div className="p-1.5 rounded-md bg-primary/10 shrink-0">
               <Icon className="h-4 w-4 text-primary" />
             </div>
             <h4 className="font-semibold text-sm line-clamp-1 min-w-0">{activeDoc.titulo}</h4>
           </div>
+
+          {/* Right: actions dropdown + navigation */}
           <div className="flex items-center gap-1 shrink-0">
-            {hasPdf && !isMobile && (
-              <>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 px-2"
-                  onClick={openFullscreen}
-                  aria-label={STRINGS.fullscreen}
-                  title={STRINGS.fullscreen}
-                >
-                  <ExternalLink className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="sm" className="h-7 px-2" asChild>
-                  <a href={pdfUrl} download aria-label={STRINGS.download} title={STRINGS.download}>
-                    <Download className="h-4 w-4" />
-                  </a>
-                </Button>
-              </>
+            {/* Actions dropdown — compact, works on all screen sizes */}
+            {hasPdf && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-7 w-7">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={openFullscreen}>
+                    <Maximize2 className="h-4 w-4 mr-2" /> {STRINGS.fullscreen}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <a href={pdfUrl} target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="h-4 w-4 mr-2" /> {STRINGS.newTab}
+                    </a>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <a href={pdfUrl} download>
+                      <Download className="h-4 w-4 mr-2" /> {STRINGS.download}
+                    </a>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
+
+            {/* Navigation */}
             {totalDocs > 1 && (
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-0.5">
                 <Button variant="ghost" size="icon" className="h-7 w-7" onClick={goToPrev}>
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <div className="flex gap-1" role="tablist" aria-label={STRINGS.docNavLabel}>
-                  {documents.map((doc, index) => (
-                    <button
-                      key={doc.id || index}
-                      onClick={() => goToIndex(index)}
-                      role="tab"
-                      aria-selected={index === activeIndex}
-                      aria-label={`Documento ${index + 1} de ${totalDocs}`}
-                      className={cn(
-                        "w-2 h-2 rounded-full transition-colors",
-                        index === activeIndex ? "bg-primary" : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
-                      )}
-                    />
-                  ))}
-                </div>
+
+                {totalDocs <= 5 ? (
+                  <div className="flex gap-1" role="tablist" aria-label={STRINGS.docNavLabel}>
+                    {documents.map((doc, index) => (
+                      <button
+                        key={doc.id || index}
+                        onClick={() => goToIndex(index)}
+                        role="tab"
+                        aria-selected={index === activeIndex}
+                        aria-label={`Documento ${index + 1} de ${totalDocs}`}
+                        className={cn(
+                          "w-2 h-2 rounded-full transition-colors",
+                          index === activeIndex ? "bg-primary" : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
+                        )}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  /* Select dropdown — jump to any document */
+                  <Select
+                    value={String(activeIndex)}
+                    onValueChange={(val) => goToIndex(Number(val))}
+                  >
+                    <SelectTrigger className="h-7 w-auto min-w-[50px] max-w-[120px] text-xs border-0 bg-transparent px-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {documents.map((doc, i) => (
+                        <SelectItem key={doc.id || i} value={String(i)} className="text-xs">
+                          {i + 1}. {doc.titulo?.substring(0, 40) || `Documento ${i + 1}`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+
                 <Button variant="ghost" size="icon" className="h-7 w-7" onClick={goToNext}>
                   <ChevronRight className="h-4 w-4" />
                 </Button>
@@ -1214,14 +1248,14 @@ const DistincionPdfModal = React.memo(function DistincionPdfModal({ item, isOpen
             <div className="flex gap-2 shrink-0">
               <Button variant="outline" size="sm" asChild>
                 <a href={pdfUrl} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink className="h-4 w-4 mr-1" />
-                  {STRINGS.newTab}
+                  <ExternalLink className="h-4 w-4 sm:mr-1" />
+                  <span className="hidden sm:inline">{STRINGS.newTab}</span>
                 </a>
               </Button>
               <Button variant="outline" size="sm" asChild>
                 <a href={pdfUrl} download>
-                  <Download className="h-4 w-4 mr-1" />
-                  {STRINGS.download}
+                  <Download className="h-4 w-4 sm:mr-1" />
+                  <span className="hidden sm:inline">{STRINGS.download}</span>
                 </a>
               </Button>
             </div>
@@ -1625,14 +1659,14 @@ const PublicacionPdfModal = React.memo(function PublicacionPdfModal({ item, isOp
                 <>
                   <Button variant="outline" size="sm" asChild>
                     <a href={pdfUrl} target="_blank" rel="noopener noreferrer">
-                      <ExternalLink className="h-4 w-4 mr-1" />
-                      {STRINGS.newTab}
+                      <ExternalLink className="h-4 w-4 sm:mr-1" />
+                      <span className="hidden sm:inline">{STRINGS.newTab}</span>
                     </a>
                   </Button>
                   <Button variant="outline" size="sm" asChild>
                     <a href={pdfUrl} download>
-                      <Download className="h-4 w-4 mr-1" />
-                      {STRINGS.download}
+                      <Download className="h-4 w-4 sm:mr-1" />
+                      <span className="hidden sm:inline">{STRINGS.download}</span>
                     </a>
                   </Button>
                 </>
@@ -1640,8 +1674,8 @@ const PublicacionPdfModal = React.memo(function PublicacionPdfModal({ item, isOp
               {externalUrl && (
                 <Button variant="outline" size="sm" asChild>
                   <a href={externalUrl} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="h-4 w-4 mr-1" />
-                    Ver enlace
+                    <ExternalLink className="h-4 w-4 sm:mr-1" />
+                    <span className="hidden sm:inline">{STRINGS.viewLink}</span>
                   </a>
                 </Button>
               )}
@@ -2021,6 +2055,7 @@ const PanelRenderer = React.memo(function PanelRenderer({ panelId, data }) {
   if (items.length === 0) return null;
 
   const Icon = config.icon;
+  const isDocumentPanel = DOCUMENT_RENDER_TYPES.includes(config.renderType);
 
   const renderContent = () => {
     switch (config.renderType) {
@@ -2061,10 +2096,15 @@ const PanelRenderer = React.memo(function PanelRenderer({ panelId, data }) {
           {items.length}
         </Badge>
       </div>
-      {/* Content - Scroll uniforme para todas las secciones */}
+      {/* Content - Documents use overflow-hidden (fixed height, internal nav), others scroll */}
       <div
-        className="relative flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent"
-        style={{ maxHeight: PANEL_MAX_HEIGHT }}
+        className={cn(
+          "relative flex-1",
+          isDocumentPanel
+            ? "overflow-hidden"
+            : "overflow-y-auto scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent"
+        )}
+        style={isDocumentPanel ? undefined : { maxHeight: PANEL_MAX_HEIGHT }}
       >
         <div className="space-y-4">
           {renderContent()}

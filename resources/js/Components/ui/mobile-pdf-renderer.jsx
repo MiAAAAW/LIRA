@@ -123,30 +123,36 @@ export default function MobilePdfRenderer({ url, title }) {
         </Document>
       </div>
 
-      {/* Page navigation */}
-      {numPages && numPages > 1 && (
+      {/* Page navigation — always show after document loads */}
+      {numPages && (
         <div className="flex items-center justify-center gap-3 py-2 px-3 border-t bg-background/95 backdrop-blur-sm shrink-0">
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8"
-            onClick={goToPrev}
-            disabled={pageNumber <= 1}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <span className="text-sm text-muted-foreground tabular-nums min-w-[60px] text-center">
-            {pageNumber} / {numPages}
-          </span>
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8"
-            onClick={goToNext}
-            disabled={pageNumber >= numPages}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+          {numPages > 1 ? (
+            <>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8"
+                onClick={goToPrev}
+                disabled={pageNumber <= 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="text-sm text-muted-foreground tabular-nums min-w-[60px] text-center">
+                {pageNumber} / {numPages}
+              </span>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8"
+                onClick={goToNext}
+                disabled={pageNumber >= numPages}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </>
+          ) : (
+            <span className="text-xs text-muted-foreground">1 página</span>
+          )}
         </div>
       )}
     </div>
