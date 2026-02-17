@@ -235,8 +235,8 @@ const DocumentViewer = React.memo(function DocumentViewer({ documents, icon: Ico
           </div>
         </div>
 
-        {/* PREVIEW DEL PDF */}
-        <div className="bg-muted/10 h-[350px] sm:h-[500px] md:h-[600px]">
+        {/* PREVIEW DEL PDF — heights must fit within PANEL_MAX_HEIGHT (600px) minus header (~56px) */}
+        <div className="bg-muted/10 h-[350px] sm:h-[450px] md:h-[540px]">
           {hasPdf ? (
             <PdfViewer
               url={pdfUrl}
