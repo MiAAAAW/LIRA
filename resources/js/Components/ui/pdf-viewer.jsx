@@ -51,7 +51,11 @@ export function PdfViewer({
   if (!url) return null;
 
   const toolbarParam = toolbar ? 1 : 0;
-  const iframeSrc = `${url}#toolbar=${toolbarParam}&navpanes=0&scrollbar=1&view=FitH`;
+  // Preview (no toolbar): fit entire page, no scrollbar → clean preview
+  // Full view (toolbar): fit width, scrollbar → user reads full document
+  const scrollbar = toolbar ? 1 : 0;
+  const view = toolbar ? 'FitH' : 'Fit';
+  const iframeSrc = `${url}#toolbar=${toolbarParam}&navpanes=0&scrollbar=${scrollbar}&view=${view}`;
 
   // Mobile: react-pdf canvas renderer
   if (isMobile) {
