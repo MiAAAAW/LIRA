@@ -9,9 +9,8 @@ import { Document, Page, pdfjs } from 'react-pdf';
 import { ChevronLeft, ChevronRight, Download, Loader2 } from 'lucide-react';
 import { Button } from '@/Components/ui/button';
 
-// PDF.js worker bundled as Vite asset (no external CDN dependency)
-import workerSrc from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
-pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
+// jsdelivr mirrors npm directly — any published version is available
+pdfjs.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 export default function MobilePdfRenderer({ url, title }) {
   const [numPages, setNumPages] = useState(null);
