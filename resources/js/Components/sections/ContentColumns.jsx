@@ -178,9 +178,9 @@ const DocumentViewer = React.memo(function DocumentViewer({ documents, icon: Ico
 
   return (
     <>
-      <Card className="border-border/50 overflow-hidden flex flex-col max-h-[75vh]">
-        {/* Header con info del documento */}
-        <div className="flex items-center justify-between gap-2 p-3 border-b border-border/50 bg-muted/30 shrink-0">
+      <Card className="border-border/50 overflow-hidden">
+        {/* Header con info del documento + navegación */}
+        <div className="flex items-center justify-between gap-2 p-3 border-b border-border/50 bg-muted/30">
           <div className="flex items-center gap-2 min-w-0 flex-1">
             <div className="p-1.5 rounded-md bg-primary/10 shrink-0">
               <Icon className="h-4 w-4 text-primary" />
@@ -208,13 +208,35 @@ const DocumentViewer = React.memo(function DocumentViewer({ documents, icon: Ico
               </>
             )}
             {totalDocs > 1 && (
-              <Badge variant="outline" className="text-xs">{activeIndex + 1}/{totalDocs}</Badge>
+              <div className="flex items-center gap-1">
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={goToPrev}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <div className="flex gap-1" role="tablist" aria-label={STRINGS.docNavLabel}>
+                  {documents.map((doc, index) => (
+                    <button
+                      key={doc.id || index}
+                      onClick={() => goToIndex(index)}
+                      role="tab"
+                      aria-selected={index === activeIndex}
+                      aria-label={`Documento ${index + 1} de ${totalDocs}`}
+                      className={cn(
+                        "w-2 h-2 rounded-full transition-colors",
+                        index === activeIndex ? "bg-primary" : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
+                      )}
+                    />
+                  ))}
+                </div>
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={goToNext}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
             )}
           </div>
         </div>
 
-        {/* PREVIEW DEL PDF - fills remaining space */}
-        <div className="bg-muted/10 flex-1 min-h-0">
+        {/* PREVIEW DEL PDF */}
+        <div className="bg-muted/10 h-[350px] sm:h-[500px] md:h-[600px]">
           {hasPdf ? (
             <PdfViewer
               url={pdfUrl}
@@ -232,33 +254,6 @@ const DocumentViewer = React.memo(function DocumentViewer({ documents, icon: Ico
             </div>
           )}
         </div>
-
-        {/* Navegación */}
-        {totalDocs > 1 && (
-          <div className="flex items-center justify-center gap-4 p-3 border-t border-border/50 bg-muted/20 shrink-0">
-            <Button variant="outline" size="sm" onClick={goToPrev} className="h-8">
-              <ChevronLeft className="h-4 w-4 mr-1" /> {STRINGS.previous}
-            </Button>
-            <div className="flex gap-1.5" role="tablist" aria-label={STRINGS.docNavLabel}>
-              {documents.map((doc, index) => (
-                <button
-                  key={doc.id || index}
-                  onClick={() => goToIndex(index)}
-                  role="tab"
-                  aria-selected={index === activeIndex}
-                  aria-label={`Documento ${index + 1} de ${totalDocs}`}
-                  className={cn(
-                    "w-2 h-2 rounded-full transition-colors",
-                    index === activeIndex ? "bg-primary" : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
-                  )}
-                />
-              ))}
-            </div>
-            <Button variant="outline" size="sm" onClick={goToNext} className="h-8">
-              {STRINGS.next} <ChevronRight className="h-4 w-4 ml-1" />
-            </Button>
-          </div>
-        )}
       </Card>
 
       {/* Modal fullscreen */}
