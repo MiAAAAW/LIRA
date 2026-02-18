@@ -49,81 +49,101 @@ function DynamicIcon({ name, className }) {
 
 /**
  * Video Background Component
- * Falls back to gradient if video fails to load
+ *
+ * Detects autoplay failure (iOS Low Power Mode, Android Data Saver,
+ * slow connections) and signals parent via onError to fall back gracefully.
+ * Uses 'playing' event to confirm actual frame rendering, not just data loading.
  */
 function VideoBackground({ video, onError }) {
-  const [isReady, setIsReady] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
   const videoRef = useRef(null);
+  const onErrorRef = useRef(onError);
+  onErrorRef.current = onError;
   const videoSrc = video?.src;
 
   useEffect(() => {
-    const videoElement = videoRef.current;
-    if (!videoElement || !videoSrc) return;
+    const el = videoRef.current;
+    if (!el || !videoSrc) return;
 
-    setIsReady(false);
+    setIsPlaying(false);
+    let cancelled = false;
 
-    const handleReady = () => setIsReady(true);
-    const handleError = () => onError?.();
+    // Fix React muted prop bug — ensure muted is set before play attempt
+    // React sometimes fails to apply the muted attribute on initial render
+    // https://github.com/facebook/react/issues/10389
+    el.muted = true;
 
-    videoElement.addEventListener('canplaythrough', handleReady);
-    videoElement.addEventListener('loadeddata', handleReady);
-    videoElement.addEventListener('error', handleError);
+    // Detect autoplay block via .play() promise rejection
+    // This is the ONLY reliable way to know if autoplay was blocked
+    const playAttempt = el.play();
+    if (playAttempt !== undefined) {
+      playAttempt.catch((err) => {
+        // AbortError = .play() interrupted by autoPlay attr race condition (Chrome)
+        // This is NOT a real failure — the video may still autoplay fine
+        // NotAllowedError = autoplay genuinely blocked (Low Power, Data Saver)
+        // NotSupportedError = format not supported
+        if (!cancelled && err.name !== 'AbortError') {
+          onErrorRef.current?.();
+        }
+      });
+    }
+
+    // Timeout: if video hasn't started after 10s (slow connection), fall back
+    const timeout = setTimeout(() => {
+      if (!cancelled && el.paused) onErrorRef.current?.();
+    }, 10000);
 
     return () => {
-      videoElement.removeEventListener('canplaythrough', handleReady);
-      videoElement.removeEventListener('loadeddata', handleReady);
-      videoElement.removeEventListener('error', handleError);
+      cancelled = true;
+      clearTimeout(timeout);
     };
-  }, [videoSrc, onError]);
+  }, [videoSrc]);
 
   if (!videoSrc) return null;
 
   return (
-    <div className="absolute inset-0 -z-10 overflow-hidden bg-background">
-      <video
-        ref={videoRef}
-        src={videoSrc}
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="auto"
-        className={cn(
-          "absolute inset-0 w-full h-full object-cover object-center",
-          "transition-opacity duration-700",
-          isReady ? "opacity-100" : "opacity-0"
-        )}
-      />
-    </div>
+    <video
+      ref={videoRef}
+      src={videoSrc}
+      autoPlay
+      muted
+      loop
+      playsInline
+      preload="metadata"
+      onPlaying={() => setIsPlaying(true)}
+      onError={() => onError?.()}
+      className={cn(
+        "absolute inset-0 w-full h-full object-cover object-center",
+        "transition-opacity duration-700",
+        isPlaying ? "opacity-100" : "opacity-0"
+      )}
+    />
   );
 }
 
 /**
- * Hero Background Fallback - Gradiente simple
- * Solo se usa si no hay video o si el video falla
+ * Hero Background Fallback - Gradiente elegante
+ * Siempre visible como capa base mientras el media carga o si falla
  */
 function HeroBackgroundFallback() {
   return (
-    <div className="absolute inset-0 -z-10 overflow-hidden">
-      {/* Gradiente oscuro elegante */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background: `linear-gradient(
-            135deg,
-            #0a0a0a 0%,
-            #1a1a2e 50%,
-            #16213e 100%
-          )`
-        }}
-      />
-    </div>
+    <div
+      className="absolute inset-0"
+      style={{
+        background: `linear-gradient(
+          135deg,
+          #0a0a0a 0%,
+          #1a1a2e 50%,
+          #16213e 100%
+        )`
+      }}
+    />
   );
 }
 
 /**
  * Image Background Component
- * Falls back to gradient if image fails to load
+ * Fades in over gradient when loaded, falls back via onError
  */
 function ImageBackground({ image, onError }) {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -131,45 +151,57 @@ function ImageBackground({ image, onError }) {
   if (!image?.src) return null;
 
   return (
-    <div className="absolute inset-0 -z-10 overflow-hidden bg-background">
-      <img
-        src={image.src}
-        alt={image.alt || ''}
-        onLoad={() => setIsLoaded(true)}
-        onError={() => onError?.()}
-        className={cn(
-          "absolute inset-0 w-full h-full object-cover object-center",
-          "transition-opacity duration-700",
-          isLoaded ? "opacity-100" : "opacity-0"
-        )}
-      />
-    </div>
+    <img
+      src={image.src}
+      alt={image.alt || ''}
+      onLoad={() => setIsLoaded(true)}
+      onError={() => onError?.()}
+      className={cn(
+        "absolute inset-0 w-full h-full object-cover object-center",
+        "transition-opacity duration-700",
+        isLoaded ? "opacity-100" : "opacity-0"
+      )}
+    />
   );
 }
 
 /**
- * Hero Background - Wrapper que elige entre video, imagen o fallback
- * Si el media falla al cargar, cae automáticamente al gradiente
+ * Hero Background - Sistema de capas
+ *
+ * Capas (de abajo a arriba):
+ *   1. Gradient — SIEMPRE visible, sirve como loading state y fallback mobile
+ *   2. Image — fade-in cuando carga
+ *   3. Video — fade-in solo cuando está REPRODUCIENDO frames
+ *
+ * En mobile donde autoplay está bloqueado, el video queda en opacity-0
+ * y el gradiente provee un fallback elegante — nunca pantalla negra.
  */
 function HeroBackground({ video, image }) {
-  const [mediaFailed, setMediaFailed] = useState(false);
+  const [videoFailed, setVideoFailed] = useState(false);
+  const [imageFailed, setImageFailed] = useState(false);
 
-  // Reset error state si cambia el source
+  // Reset on source change
   useEffect(() => {
-    setMediaFailed(false);
+    setVideoFailed(false);
+    setImageFailed(false);
   }, [video?.src, image?.src]);
 
-  if (mediaFailed) {
-    return <HeroBackgroundFallback />;
-  }
+  return (
+    <div className="absolute inset-0 -z-10 overflow-hidden">
+      {/* Layer 0: Gradient — siempre visible como base/loading state */}
+      <HeroBackgroundFallback />
 
-  if (video?.src) {
-    return <VideoBackground video={video} onError={() => setMediaFailed(true)} />;
-  }
-  if (image?.src) {
-    return <ImageBackground image={image} onError={() => setMediaFailed(true)} />;
-  }
-  return <HeroBackgroundFallback />;
+      {/* Layer 1: Image — fade-in sobre el gradient */}
+      {!imageFailed && image?.src && (
+        <ImageBackground image={image} onError={() => setImageFailed(true)} />
+      )}
+
+      {/* Layer 2: Video — fade-in solo cuando está reproduciendo */}
+      {!videoFailed && video?.src && (
+        <VideoBackground video={video} onError={() => setVideoFailed(true)} />
+      )}
+    </div>
+  );
 }
 
 /**
@@ -299,7 +331,7 @@ export function Hero({ config, className }) {
     <section
       id="hero"
       className={cn(
-        'relative min-h-screen flex items-center justify-center overflow-hidden',
+        'relative min-h-dvh flex items-center justify-center overflow-hidden',
         'pt-20 pb-16',
         className
       )}

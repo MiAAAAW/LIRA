@@ -1047,7 +1047,10 @@ const AudioCard = React.memo(function AudioCard({ audio }) {
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <Card className="border-border/50 hover:border-violet-500/30 transition-all duration-300 hover:shadow-lg group">
+    <Card
+      className="border-border/50 hover:border-violet-500/30 transition-all duration-300 hover:shadow-lg group cursor-default"
+      onPointerDown={(e) => e.stopPropagation()}
+    >
       <CardContent className="p-4">
         {/* Hidden audio element */}
         {audioUrl && (
@@ -1124,9 +1127,12 @@ const AudioCard = React.memo(function AudioCard({ audio }) {
               </div>
             )}
 
-            {/* Volume control */}
+            {/* Volume control — always accessible (no hover needed on mobile) */}
             {audioUrl && (
-              <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className={cn(
+                "flex items-center gap-2 transition-opacity",
+                isPlaying ? "opacity-100" : "opacity-50 group-hover:opacity-100"
+              )}>
                 <button
                   onClick={toggleMute}
                   className="text-muted-foreground hover:text-foreground transition-colors"
@@ -1509,7 +1515,7 @@ const PresidenteTimeline = React.memo(function PresidenteTimeline({ members }) {
               </div>
 
               {/* Contenido */}
-              <div className="flex items-center gap-3">
+              <div className="flex items-start gap-3">
                 {/* Avatar pequeño */}
                 <div className={cn(
                   "shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold",
@@ -1528,11 +1534,11 @@ const PresidenteTimeline = React.memo(function PresidenteTimeline({ members }) {
                   )}
                 </div>
 
-                {/* Info */}
+                {/* Info — nombre toma ancho completo, period va con role */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
+                  <div className="flex items-start gap-2 flex-wrap">
                     <h4 className={cn(
-                      "font-semibold text-sm truncate",
+                      "font-semibold text-sm line-clamp-2",
                       isCurrent && "text-primary"
                     )}>
                       {member.name}
@@ -1543,19 +1549,17 @@ const PresidenteTimeline = React.memo(function PresidenteTimeline({ members }) {
                       </Badge>
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {member.role}
-                  </p>
-                </div>
-
-                {/* Periodo */}
-                <div className="shrink-0 text-right">
-                  <span className={cn(
-                    "text-xs font-mono",
-                    isCurrent ? "text-primary font-semibold" : "text-muted-foreground"
-                  )}>
-                    {member.period}
-                  </span>
+                  <div className="flex items-center justify-between gap-2 mt-0.5">
+                    <p className="text-xs text-muted-foreground line-clamp-1">
+                      {member.role}
+                    </p>
+                    <span className={cn(
+                      "text-xs font-mono shrink-0",
+                      isCurrent ? "text-primary font-semibold" : "text-muted-foreground"
+                    )}>
+                      {member.period}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>

@@ -88,7 +88,7 @@ export default function Landing({
 
           {/* 2-Column Layout: All 10 modules — con background image del CDN */}
           <div
-            className="relative bg-cover bg-center bg-fixed"
+            className="relative bg-cover bg-center md:bg-fixed"
             style={cdnUrl ? { backgroundImage: `url(${cdnUrl}/landing/background.jpeg)` } : undefined}
           >
             <div className="absolute inset-0 bg-background/40" />

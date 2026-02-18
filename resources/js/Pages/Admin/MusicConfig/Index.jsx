@@ -13,7 +13,7 @@ export default function Index({ items }) {
       render: (value) => {
         if (!value) return <span className="text-xs text-muted-foreground">Sin audio</span>;
         return (
-          <audio controls preload="none" className="h-8 w-48">
+          <audio controls preload="metadata" className="w-64 min-w-[16rem] max-w-full">
             <source src={value} />
           </audio>
         );
