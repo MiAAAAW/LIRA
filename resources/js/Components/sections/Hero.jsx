@@ -88,14 +88,8 @@ function VideoBackground({ video, onError }) {
       });
     }
 
-    // Timeout: if video hasn't started after 10s (slow connection), fall back
-    const timeout = setTimeout(() => {
-      if (!cancelled && el.paused) onErrorRef.current?.();
-    }, 10000);
-
     return () => {
       cancelled = true;
-      clearTimeout(timeout);
     };
   }, [videoSrc]);
 
