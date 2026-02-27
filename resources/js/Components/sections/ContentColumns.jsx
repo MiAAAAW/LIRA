@@ -385,8 +385,9 @@ const VideoModalCarousel = React.memo(function VideoModalCarousel({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl w-[95vw] p-0 gap-0 overflow-hidden">
-        <DialogHeader className="p-4 pb-2 border-b">
+      <DialogContent className="max-w-5xl w-[95vw] p-0 gap-0 flex flex-col max-h-[90vh]">
+        {/* Header — altura fija */}
+        <DialogHeader className="shrink-0 p-4 pb-2 border-b">
           <div className="flex items-center justify-between pr-8">
             <div className="min-w-0 flex-1">
               <DialogTitle className="line-clamp-1">{currentVideo.titulo}</DialogTitle>
@@ -404,45 +405,44 @@ const VideoModalCarousel = React.memo(function VideoModalCarousel({
           </div>
         </DialogHeader>
 
-        <div className="relative bg-muted">
-          <AspectRatio ratio={16 / 9}>
-            {isYouTube ? (
-              <iframe
-                key={currentVideo.id}
-                src={`https://www.youtube.com/embed/${currentVideo.video_id}?autoplay=1&rel=0`}
-                title={currentVideo.titulo}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                className="w-full h-full border-0"
-              />
-            ) : (
-              <video
-                key={currentVideo.id}
-                ref={videoRef}
-                src={videoUrl}
-                controls
-                autoPlay
-                playsInline
-                className="w-full h-full bg-muted"
-              >
-                Tu navegador no soporta el elemento video.
-              </video>
-            )}
-          </AspectRatio>
+        {/* Video — ocupa todo el espacio restante, respeta max-h del modal */}
+        <div className="relative bg-black flex-1 min-h-0">
+          {isYouTube ? (
+            <iframe
+              key={currentVideo.id}
+              src={`https://www.youtube.com/embed/${currentVideo.video_id}?autoplay=1&rel=0`}
+              title={currentVideo.titulo}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              className="absolute inset-0 w-full h-full border-0"
+            />
+          ) : (
+            <video
+              key={currentVideo.id}
+              ref={videoRef}
+              src={videoUrl}
+              controls
+              autoPlay
+              playsInline
+              className="absolute inset-0 w-full h-full"
+            >
+              Tu navegador no soporta el elemento video.
+            </video>
+          )}
 
-          {/* Navigation arrows on video */}
+          {/* Navigation arrows */}
           {hasMultiple && (
             <>
               <button
                 onClick={goToPrev}
-                className="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/80 hover:bg-background text-foreground shadow-lg transition-all hover:scale-110"
+                className="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/80 hover:bg-background text-foreground shadow-lg transition-all hover:scale-110 z-10"
                 aria-label="Video anterior"
               >
                 <ChevronLeft className="h-6 w-6" />
               </button>
               <button
                 onClick={goToNext}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/80 hover:bg-background text-foreground shadow-lg transition-all hover:scale-110"
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/80 hover:bg-background text-foreground shadow-lg transition-all hover:scale-110 z-10"
                 aria-label="Video siguiente"
               >
                 <ChevronRight className="h-6 w-6" />
@@ -451,8 +451,8 @@ const VideoModalCarousel = React.memo(function VideoModalCarousel({
           )}
         </div>
 
-        {/* Footer with info + description + navigation */}
-        <div className="border-t bg-muted/30">
+        {/* Footer — altura natural, scroll propio si la descripción crece */}
+        <div className="shrink-0 border-t bg-muted/30 max-h-[45vh] overflow-y-auto">
           {/* Video info row */}
           <div className="flex items-center gap-3 text-sm text-muted-foreground px-4 pt-3 pb-2">
             {currentVideo.duracion && (
@@ -466,7 +466,7 @@ const VideoModalCarousel = React.memo(function VideoModalCarousel({
             )}
           </div>
 
-          {/* Expandable description (only if exists) */}
+          {/* Expandable description */}
           {currentVideo.descripcion_larga && (
             <div className="px-4 pb-2">
               <button
@@ -478,7 +478,7 @@ const VideoModalCarousel = React.memo(function VideoModalCarousel({
               </button>
               {descExpanded && (
                 <div
-                  className="prose prose-sm dark:prose-invert max-w-none max-h-40 overflow-y-auto pb-1
+                  className="prose prose-sm dark:prose-invert max-w-none pb-1
                     prose-p:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0"
                   dangerouslySetInnerHTML={{ __html: currentVideo.descripcion_larga }}
                 />
@@ -486,7 +486,7 @@ const VideoModalCarousel = React.memo(function VideoModalCarousel({
             </div>
           )}
 
-          {/* Unified navigation: Anterior | dots | Siguiente */}
+          {/* Unified navigation */}
           {hasMultiple && (
             <div className="flex items-center justify-center gap-4 px-4 pb-4">
               <Button variant="outline" size="sm" onClick={goToPrev} className="h-8">

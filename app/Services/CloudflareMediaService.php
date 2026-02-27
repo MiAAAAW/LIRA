@@ -31,6 +31,7 @@ class CloudflareMediaService
     public const TYPE_DOCUMENT = 'documents';
     public const TYPE_DISTINCION = 'documents/distinciones';
     public const TYPE_PUBLICACION = 'documents/publicaciones';
+    public const TYPE_PARTITURA = 'documents/audios';
     public const TYPE_HERO = 'hero';
     public const TYPE_MUSIC = 'music';
     public const TYPE_IMAGE = 'images';
@@ -208,6 +209,7 @@ class CloudflareMediaService
             self::TYPE_HERO, self::TYPE_MUSIC, self::TYPE_IMAGE,
             'images/estandartes', 'images/comunicados', 'images/publicaciones',
             'documents/ley24325', 'documents/baselegal', 'documents/indecopi',
+            self::TYPE_PARTITURA,
         ];
 
         if (!in_array($type, $validTypes)) {
