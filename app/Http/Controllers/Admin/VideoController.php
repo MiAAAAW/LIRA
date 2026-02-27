@@ -77,16 +77,29 @@ class VideoController extends Controller
             }
         }
 
-        // Validar que tenga video
-        if (empty($validated['url_video']) && empty($validated['r2_key'])) {
+        // Validar según fuente
+        if (($validated['tipo_fuente'] ?? '') === 'youtube') {
+            if (empty($validated['url_video'])) {
+                return back()
+                    ->withInput()
+                    ->withErrors(['url_video' => 'Ingresa el enlace de YouTube.']);
+            }
+            $youtubeId = $this->extractYoutubeId($validated['url_video']);
+            if (!$youtubeId) {
+                return back()
+                    ->withInput()
+                    ->withErrors(['url_video' => 'Enlace de YouTube no válido. Usa el formato youtube.com/watch?v=... o youtu.be/...']);
+            }
+            $validated['video_id'] = $youtubeId;
+        } elseif (empty($validated['url_video']) && empty($validated['r2_key'])) {
             return back()
                 ->withInput()
                 ->withErrors(['video_file' => 'Debes subir un archivo de video.']);
         }
 
-        // Extraer video_id de URL si no se proporciona
+        // Extraer video_id de URL si no se proporciona (para fuentes no-YouTube)
         if (empty($validated['video_id'])) {
-            $validated['video_id'] = $this->extractVideoId($validated['url_video'], $validated['tipo_fuente']);
+            $validated['video_id'] = $this->extractVideoId($validated['url_video'] ?? '', $validated['tipo_fuente'] ?? '');
         }
 
         // Handle manual thumbnail upload
@@ -179,8 +192,21 @@ class VideoController extends Controller
             $validated['r2_key'] = $video->r2_key;
         }
 
+        // Validar YouTube URL si aplica
+        $tipoFuente = $validated['tipo_fuente'] ?? $video->tipo_fuente ?? '';
+        $urlVideo = $validated['url_video'] ?? $video->url_video ?? '';
+        if ($tipoFuente === 'youtube' && !empty($urlVideo)) {
+            $youtubeId = $this->extractYoutubeId($urlVideo);
+            if (!$youtubeId) {
+                return back()
+                    ->withInput()
+                    ->withErrors(['url_video' => 'Enlace de YouTube no válido. Usa el formato youtube.com/watch?v=... o youtu.be/...']);
+            }
+            $validated['video_id'] = $youtubeId;
+        }
+
         if (empty($validated['video_id'])) {
-            $validated['video_id'] = $this->extractVideoId($validated['url_video'], $validated['tipo_fuente']);
+            $validated['video_id'] = $this->extractVideoId($urlVideo, $tipoFuente);
         }
 
         // Handle manual thumbnail upload
@@ -239,7 +265,13 @@ class VideoController extends Controller
 
     private function extractYoutubeId(string $url): ?string
     {
-        preg_match('/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/', $url, $matches);
+        // Cubre: youtube.com/watch?v=, /embed/, /shorts/, youtu.be/
+        // Con o sin prefijos www. m. music.
+        preg_match(
+            '/(?:(?:www\.|m\.|music\.)?youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/',
+            $url,
+            $matches
+        );
         return $matches[1] ?? null;
     }
 

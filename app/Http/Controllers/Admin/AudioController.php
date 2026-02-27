@@ -47,7 +47,9 @@ class AudioController extends Controller
             'audio_file' => 'nullable|file|mimes:mp3,wav,ogg,m4a|max:512000', // 500MB
             'thumbnail' => 'nullable|image|max:5120',
             'letra' => 'nullable|string',
-            'partitura_pdf' => 'nullable|file|mimes:pdf|max:10240',
+            // Partitura via direct upload a R2
+            'partitura_pdf' => 'nullable|string|max:500',
+            'r2_partitura_key' => 'nullable|string|max:500',
             'orden' => 'nullable|integer',
             'is_published' => 'boolean',
             'is_featured' => 'boolean',
@@ -93,11 +95,6 @@ class AudioController extends Controller
                 ->store(config('pandilla.uploads.paths.images'), 'public');
         }
 
-        if ($request->hasFile('partitura_pdf')) {
-            $validated['partitura_pdf'] = $request->file('partitura_pdf')
-                ->store(config('pandilla.uploads.paths.documents'), 'public');
-        }
-
         // Limpiar campos no persistibles
         unset($validated['audio_file'], $validated['r2_url']);
 
@@ -128,7 +125,9 @@ class AudioController extends Controller
             'audio_file' => 'nullable|file|mimes:mp3,wav,ogg,m4a|max:512000',
             'thumbnail' => 'nullable|image|max:5120',
             'letra' => 'nullable|string',
-            'partitura_pdf' => 'nullable|file|mimes:pdf|max:10240',
+            // Partitura via direct upload a R2
+            'partitura_pdf' => 'nullable|string|max:500',
+            'r2_partitura_key' => 'nullable|string|max:500',
             'orden' => 'nullable|integer',
             'is_published' => 'boolean',
             'is_featured' => 'boolean',
@@ -192,12 +191,9 @@ class AudioController extends Controller
                 ->store(config('pandilla.uploads.paths.images'), 'public');
         }
 
-        if ($request->hasFile('partitura_pdf')) {
-            if ($audio->partitura_pdf) {
-                Storage::disk('public')->delete($audio->partitura_pdf);
-            }
-            $validated['partitura_pdf'] = $request->file('partitura_pdf')
-                ->store(config('pandilla.uploads.paths.documents'), 'public');
+        // Si no se subió nueva partitura, conservar la existente
+        if (empty($validated['partitura_pdf']) && $audio->partitura_pdf) {
+            unset($validated['partitura_pdf'], $validated['r2_partitura_key']);
         }
 
         // Remove temporary fields

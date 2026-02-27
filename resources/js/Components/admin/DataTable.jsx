@@ -582,6 +582,7 @@ export default function DataTable({
                             onUploadingChange={setIsUploading}
                             value={formData[field.name]}
                             existingFile={existingFile}
+                            compact={field.compact ?? false}
                           />
                         </div>
                       );

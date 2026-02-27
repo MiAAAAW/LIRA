@@ -22,14 +22,25 @@ export default function Index({ items, tipos, sectionVisible }) {
   // Simplified form fields - upload directo a CDN con progress bar
   const formFields = [
     { name: 'titulo', label: 'Título', required: true, fullWidth: true },
-    { name: 'tipo', label: 'Tipo de música', type: 'select', options: tipoOptions, required: true, defaultValue: 'pandilla' },
+    { name: 'tipo', label: 'Tipo de música', type: 'combobox', options: tipoOptions, required: true, placeholder: 'Seleccionar o escribir libremente...' },
     {
       name: 'audio_file',
       label: 'Archivo de audio',
       type: 'direct-upload',
       uploadType: 'audios',
       helpText: 'MP3, WAV u OGG. Hasta 500MB. Se sube directo al CDN.',
-      required: true
+      required: true,
+      compact: true,
+    },
+    {
+      name: 'partitura_pdf',
+      label: 'Partitura / Documento PDF',
+      type: 'direct-upload',
+      uploadType: 'documents/audios',
+      helpText: 'Opcional. Partitura, letra u otro documento. Max 50MB.',
+      keyField: 'r2_partitura_key',
+      urlField: 'partitura_pdf',
+      compact: true,
     },
     { name: 'compositor', label: 'Compositor' },
     { name: 'interprete', label: 'Intérprete' },

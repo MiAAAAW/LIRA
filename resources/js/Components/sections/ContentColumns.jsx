@@ -955,6 +955,7 @@ const AudioCard = React.memo(function AudioCard({ audio }) {
   const [duration, setDuration] = React.useState(0);
   const [volume, setVolume] = React.useState(80);
   const [isMuted, setIsMuted] = React.useState(false);
+  const [isDetailOpen, setIsDetailOpen] = React.useState(false);
 
   // Media context para coordinar con videos y otros audios
   const { activeMediaId, activeMediaType, setActiveMedia, modalOpen } = useMediaContext();
@@ -962,6 +963,7 @@ const AudioCard = React.memo(function AudioCard({ audio }) {
   const isThisActive = activeMediaId === audioId && activeMediaType === 'audio';
 
   // Pausar cuando otro media se activa o modal se abre
+  // NOTA: isDetailOpen NO pausa el audio — se usa estado local para no tocar modalOpen
   React.useEffect(() => {
     if ((!isThisActive && activeMediaId !== null) || modalOpen) {
       if (audioRef.current && isPlaying) {
@@ -1045,117 +1047,305 @@ const AudioCard = React.memo(function AudioCard({ audio }) {
   };
 
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+  const hasPdf = !!audio.partitura_pdf;
 
   return (
-    <Card
-      className="border-border/50 hover:border-violet-500/30 transition-all duration-300 hover:shadow-lg group cursor-default"
-      onPointerDown={(e) => e.stopPropagation()}
-    >
-      <CardContent className="p-4">
-        {/* Hidden audio element */}
-        {audioUrl && (
-          <audio
-            ref={audioRef}
-            src={audioUrl}
-            preload="metadata"
-            onPlay={() => setIsPlaying(true)}
-            onPause={() => setIsPlaying(false)}
-            onEnded={() => { setIsPlaying(false); setCurrentTime(0); setActiveMedia(null, null); }}
-            onTimeUpdate={handleTimeUpdate}
-            onLoadedMetadata={handleLoadedMetadata}
-            onWaiting={() => setIsBuffering(true)}
-            onCanPlay={() => setIsBuffering(false)}
-          />
-        )}
+    <>
+      <Card
+        className="border-border/50 hover:border-violet-500/30 transition-all duration-300 hover:shadow-lg group cursor-default"
+        onPointerDown={(e) => e.stopPropagation()}
+      >
+        <CardContent className="p-4">
+          {/* Hidden audio element */}
+          {audioUrl && (
+            <audio
+              ref={audioRef}
+              src={audioUrl}
+              preload="metadata"
+              onPlay={() => setIsPlaying(true)}
+              onPause={() => setIsPlaying(false)}
+              onEnded={() => { setIsPlaying(false); setCurrentTime(0); setActiveMedia(null, null); }}
+              onTimeUpdate={handleTimeUpdate}
+              onLoadedMetadata={handleLoadedMetadata}
+              onWaiting={() => setIsBuffering(true)}
+              onCanPlay={() => setIsBuffering(false)}
+            />
+          )}
 
-        {/* Main layout */}
-        <div className="flex items-center gap-3">
-          {/* Play/Pause button */}
-          <button
-            onClick={togglePlay}
-            disabled={!audioUrl}
-            className={cn(
-              "flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center transition-all relative",
-              isPlaying
-                ? "bg-violet-500 text-white shadow-lg shadow-violet-500/30"
-                : "bg-violet-500/10 text-violet-500 hover:bg-violet-500 hover:text-white hover:shadow-lg hover:shadow-violet-500/30",
-              !audioUrl && "opacity-50 cursor-not-allowed"
-            )}
-          >
-            {isBuffering ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
-            ) : isPlaying ? (
-              <Pause className="h-5 w-5" />
-            ) : (
-              <Play className="h-5 w-5 ml-0.5" />
-            )}
-          </button>
+          {/* Main layout */}
+          <div className="flex items-center gap-3">
+            {/* Play/Pause button — NO abre modal */}
+            <button
+              onClick={togglePlay}
+              disabled={!audioUrl}
+              className={cn(
+                "flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center transition-all relative",
+                isPlaying
+                  ? "bg-violet-500 text-white shadow-lg shadow-violet-500/30"
+                  : "bg-violet-500/10 text-violet-500 hover:bg-violet-500 hover:text-white hover:shadow-lg hover:shadow-violet-500/30",
+                !audioUrl && "opacity-50 cursor-not-allowed"
+              )}
+            >
+              {isBuffering ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : isPlaying ? (
+                <Pause className="h-5 w-5" />
+              ) : (
+                <Play className="h-5 w-5 ml-0.5" />
+              )}
+            </button>
 
-          {/* Info + Progress */}
-          <div className="flex-1 min-w-0 space-y-1">
-            {/* Title row */}
-            <div className="flex items-center justify-between gap-2">
-              <h4 className="font-semibold text-sm line-clamp-1">{audio.titulo}</h4>
-              {audio.tipo && (
-                <Badge variant="secondary" className="capitalize text-[10px] flex-shrink-0">
-                  {audio.tipo}
-                </Badge>
+            {/* Info + Progress — click abre el modal */}
+            <div
+              className="flex-1 min-w-0 space-y-1 cursor-pointer"
+              onClick={() => setIsDetailOpen(true)}
+            >
+              {/* Title row */}
+              <div className="flex items-center justify-between gap-2">
+                <h4 className="font-semibold text-sm line-clamp-1">{audio.titulo}</h4>
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  {hasPdf && (
+                    <FileText className="h-3 w-3 text-muted-foreground/50" title="Tiene partitura" />
+                  )}
+                  {audio.tipo && (
+                    <Badge variant="secondary" className="capitalize text-[10px]">
+                      {audio.tipo}
+                    </Badge>
+                  )}
+                </div>
+              </div>
+
+              {/* Artist */}
+              {audio.interprete && (
+                <p className="text-xs text-muted-foreground line-clamp-1">{audio.interprete}</p>
+              )}
+
+              {/* Progress bar */}
+              {audioUrl && (
+                <div
+                  className="flex items-center gap-2 pt-1"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <span className="text-[10px] text-muted-foreground w-8 text-right tabular-nums">
+                    {formatTime(currentTime)}
+                  </span>
+                  <Slider
+                    value={[progress]}
+                    max={100}
+                    step={0.1}
+                    onValueChange={handleSeek}
+                    className="flex-1 cursor-pointer [&_[role=slider]]:h-3 [&_[role=slider]]:w-3 [&_[role=slider]]:border-violet-500 [&_.bg-primary]:bg-violet-500"
+                  />
+                  <span className="text-[10px] text-muted-foreground w-8 tabular-nums">
+                    {formatTime(duration) || audio.duracion || '--:--'}
+                  </span>
+                </div>
+              )}
+
+              {/* Volume control */}
+              {audioUrl && (
+                <div
+                  className={cn(
+                    "flex items-center gap-2 transition-opacity",
+                    isPlaying ? "opacity-100" : "opacity-50 group-hover:opacity-100"
+                  )}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <button
+                    onClick={toggleMute}
+                    className="text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {isMuted || volume === 0 ? (
+                      <VolumeX className="h-3.5 w-3.5" />
+                    ) : (
+                      <Volume2 className="h-3.5 w-3.5" />
+                    )}
+                  </button>
+                  <Slider
+                    value={[isMuted ? 0 : volume]}
+                    max={100}
+                    step={1}
+                    onValueChange={handleVolumeChange}
+                    className="w-20 cursor-pointer [&_[role=slider]]:h-2.5 [&_[role=slider]]:w-2.5"
+                  />
+                </div>
               )}
             </div>
+          </div>
+        </CardContent>
+      </Card>
 
-            {/* Artist */}
-            {audio.interprete && (
-              <p className="text-xs text-muted-foreground line-clamp-1">{audio.interprete}</p>
-            )}
-
-            {/* Progress bar */}
-            {audioUrl && (
-              <div className="flex items-center gap-2 pt-1">
-                <span className="text-[10px] text-muted-foreground w-8 text-right tabular-nums">
-                  {formatTime(currentTime)}
-                </span>
-                <Slider
-                  value={[progress]}
-                  max={100}
-                  step={0.1}
-                  onValueChange={handleSeek}
-                  className="flex-1 cursor-pointer [&_[role=slider]]:h-3 [&_[role=slider]]:w-3 [&_[role=slider]]:border-violet-500 [&_.bg-primary]:bg-violet-500"
-                />
-                <span className="text-[10px] text-muted-foreground w-8 tabular-nums">
-                  {formatTime(duration) || audio.duracion || '--:--'}
-                </span>
+      {/* Modal de detalle — usa estado local (no toca modalOpen del MediaContext) */}
+      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
+        <DialogContent
+          className={cn(
+            "flex flex-col gap-0 p-0 overflow-hidden",
+            hasPdf
+              ? "max-w-2xl max-h-[85vh]"
+              : "max-w-md max-h-[90vh]"
+          )}
+        >
+          {/* Header */}
+          <DialogHeader className="p-4 pb-3 border-b shrink-0">
+            <div className="flex items-start gap-3 pr-6">
+              <div className="p-2 rounded-lg bg-violet-500/10 shrink-0">
+                <Music className="h-5 w-5 text-violet-500" />
               </div>
-            )}
+              <div className="min-w-0 flex-1">
+                <DialogTitle className="line-clamp-2 leading-snug">{audio.titulo}</DialogTitle>
+                <DialogDescription className="sr-only">
+                  Detalle del audio: {audio.titulo}
+                </DialogDescription>
+                {audio.tipo && (
+                  <Badge variant="secondary" className="capitalize text-[10px] mt-1">
+                    {audio.tipo}
+                  </Badge>
+                )}
+              </div>
+            </div>
+          </DialogHeader>
 
-            {/* Volume control — always accessible (no hover needed on mobile) */}
-            {audioUrl && (
-              <div className={cn(
-                "flex items-center gap-2 transition-opacity",
-                isPlaying ? "opacity-100" : "opacity-50 group-hover:opacity-100"
-              )}>
+          {/* Scrollable body */}
+          <div className="flex-1 overflow-y-auto min-h-0">
+            {/* Player inline */}
+            <div className="p-4 border-b">
+              <div className="flex items-center gap-3 group">
+                {/* Play/Pause */}
                 <button
-                  onClick={toggleMute}
-                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  onClick={togglePlay}
+                  disabled={!audioUrl}
+                  className={cn(
+                    "flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center transition-all",
+                    isPlaying
+                      ? "bg-violet-500 text-white shadow-lg shadow-violet-500/30"
+                      : "bg-violet-500/10 text-violet-500 hover:bg-violet-500 hover:text-white hover:shadow-lg hover:shadow-violet-500/30",
+                    !audioUrl && "opacity-50 cursor-not-allowed"
+                  )}
                 >
-                  {isMuted || volume === 0 ? (
-                    <VolumeX className="h-3.5 w-3.5" />
+                  {isBuffering ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : isPlaying ? (
+                    <Pause className="h-5 w-5" />
                   ) : (
-                    <Volume2 className="h-3.5 w-3.5" />
+                    <Play className="h-5 w-5 ml-0.5" />
                   )}
                 </button>
-                <Slider
-                  value={[isMuted ? 0 : volume]}
-                  max={100}
-                  step={1}
-                  onValueChange={handleVolumeChange}
-                  className="w-20 cursor-pointer [&_[role=slider]]:h-2.5 [&_[role=slider]]:w-2.5"
-                />
+
+                {/* Sliders */}
+                <div className="flex-1 min-w-0 space-y-1">
+                  {audioUrl && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-muted-foreground w-8 text-right tabular-nums">
+                        {formatTime(currentTime)}
+                      </span>
+                      <Slider
+                        value={[progress]}
+                        max={100}
+                        step={0.1}
+                        onValueChange={handleSeek}
+                        className="flex-1 cursor-pointer [&_[role=slider]]:h-3 [&_[role=slider]]:w-3 [&_[role=slider]]:border-violet-500 [&_.bg-primary]:bg-violet-500"
+                      />
+                      <span className="text-[10px] text-muted-foreground w-8 tabular-nums">
+                        {formatTime(duration) || audio.duracion || '--:--'}
+                      </span>
+                    </div>
+                  )}
+                  {audioUrl && (
+                    <div className={cn(
+                      "flex items-center gap-2 transition-opacity",
+                      isPlaying ? "opacity-100" : "opacity-50 group-hover:opacity-100"
+                    )}>
+                      <button
+                        onClick={toggleMute}
+                        className="text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {isMuted || volume === 0 ? (
+                          <VolumeX className="h-3.5 w-3.5" />
+                        ) : (
+                          <Volume2 className="h-3.5 w-3.5" />
+                        )}
+                      </button>
+                      <Slider
+                        value={[isMuted ? 0 : volume]}
+                        max={100}
+                        step={1}
+                        onValueChange={handleVolumeChange}
+                        className="w-20 cursor-pointer [&_[role=slider]]:h-2.5 [&_[role=slider]]:w-2.5"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Condicional: PDF o metadata */}
+            {hasPdf ? (
+              <div className="flex flex-col">
+                <div className="h-[50vh]">
+                  <PdfViewer
+                    url={audio.partitura_pdf}
+                    title={`Partitura — ${audio.titulo}`}
+                    className="w-full h-full"
+                    toolbar
+                  />
+                </div>
+                <div className="p-4 border-t shrink-0">
+                  <Button variant="outline" size="sm" asChild className="w-full">
+                    <a href={audio.partitura_pdf} download>
+                      <Download className="h-4 w-4 mr-2" />
+                      Descargar partitura
+                    </a>
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="p-4 space-y-3">
+                {/* Metadata grid */}
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  {audio.compositor && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">Compositor</p>
+                      <p className="font-medium">{audio.compositor}</p>
+                    </div>
+                  )}
+                  {audio.interprete && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">Intérprete</p>
+                      <p className="font-medium">{audio.interprete}</p>
+                    </div>
+                  )}
+                  {(audio.anio_composicion || audio.anio_grabacion) && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">
+                        {audio.anio_composicion ? 'Composición' : 'Grabación'}
+                      </p>
+                      <p className="font-medium">
+                        {audio.anio_composicion || audio.anio_grabacion}
+                      </p>
+                    </div>
+                  )}
+                  {audio.tipo && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">Tipo</p>
+                      <p className="font-medium capitalize">{audio.tipo}</p>
+                    </div>
+                  )}
+                </div>
+                {/* Letra */}
+                {audio.letra && (
+                  <div className="border-t pt-3">
+                    <p className="text-xs text-muted-foreground mb-2">Letra</p>
+                    <div className="max-h-48 overflow-y-auto">
+                      <p className="text-sm whitespace-pre-line leading-relaxed">{audio.letra}</p>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 });
 

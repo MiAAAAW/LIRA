@@ -89,7 +89,7 @@ export default function Index({ items, tipos, sectionVisible }) {
       type: 'direct-upload',
       uploadType: 'documents/publicaciones',
       fullWidth: true,
-      helpText: 'Opcional. Max 50MB. Subida directa a CDN.',
+      helpText: 'Opcional. Max 200MB. Subida directa a CDN.',
       keyField: 'r2_pdf_key',
       urlField: 'r2_pdf_url',
     },

@@ -31,6 +31,7 @@ class Audio extends Model
         'thumbnail',
         'letra',
         'partitura_pdf',
+        'r2_partitura_key',
         'reproducciones',
         'orden',
         'is_published',
@@ -48,6 +49,7 @@ class Audio extends Model
     public const TIPOS = [
         'marinera' => 'Marinera',
         'huayno' => 'Huayño',
+        'huayno_pandillero' => 'Huayno Pandillero',
         'pandilla' => 'Pandilla',
         'sikuri' => 'Sikuri',
         'morenada' => 'Morenada',

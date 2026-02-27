@@ -54,19 +54,38 @@ export default function Index({ items, sectionVisible }) {
     { key: 'is_published', label: 'Estado', type: 'badge' },
   ];
 
-  // Simplified form fields - upload directo a CDN con progress bar
   const formFields = [
     { name: 'titulo', label: 'Título del video', required: true, fullWidth: true },
     { name: 'descripcion', label: 'Descripción', type: 'textarea', rows: 2, fullWidth: true },
+    {
+      name: 'tipo_fuente',
+      label: 'Fuente del video',
+      type: 'select',
+      defaultValue: 'cloudflare',
+      options: [
+        { value: 'cloudflare', label: 'Subir archivo al CDN' },
+        { value: 'youtube', label: 'YouTube (enlace)' },
+      ],
+    },
+    // Solo visible cuando tipo_fuente = 'youtube'
+    {
+      name: 'url_video',
+      label: 'Enlace de YouTube',
+      placeholder: 'https://www.youtube.com/watch?v=...',
+      helpText: 'youtube.com/watch?v=... · youtu.be/... · youtube.com/shorts/...',
+      fullWidth: true,
+      dependsOn: { field: 'tipo_fuente', value: 'youtube' },
+    },
+    // Solo visible cuando tipo_fuente = 'cloudflare'
     {
       name: 'video_file',
       label: 'Archivo de video',
       type: 'direct-upload',
       uploadType: 'videos',
       helpText: 'MP4 o WebM. Hasta 5GB. Se sube directo al CDN.',
-      // Campo especial que lee datos existentes del item
       existingUrlField: 'playable_url',
       existingKeyField: 'r2_key',
+      dependsOn: { field: 'tipo_fuente', value: 'cloudflare' },
     },
   ];
 
@@ -92,7 +111,7 @@ export default function Index({ items, sectionVisible }) {
         updateRoute="/admin/videos/:id"
         modalTitleCreate="Subir nuevo video"
         modalTitleEdit="Editar video"
-        modalDescription="El video se sube directo al CDN con progress bar"
+        modalDescription="Sube un archivo al CDN o pega un enlace de YouTube."
       />
     </AdminLayout>
   );

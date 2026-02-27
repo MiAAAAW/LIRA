@@ -71,6 +71,10 @@ COPY --from=php-builder /usr/local/etc/php/conf.d/ /usr/local/etc/php/conf.d/
 # Configurar PHP y OPcache
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 
+# Límites de subida para PDFs grandes
+RUN printf "upload_max_filesize=256M\npost_max_size=256M\nmemory_limit=512M\nmax_execution_time=300\nmax_input_time=300\n" \
+    > "$PHP_INI_DIR/conf.d/uploads.ini"
+
 WORKDIR /var/www/html
 
 # Copiar aplicación limpia desde el builder

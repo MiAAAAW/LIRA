@@ -28,6 +28,7 @@ export default function DirectUpload({
   value,
   className,
   existingFile = null, // { url, key, name } - archivo ya existente (para edición)
+  compact = false, // modo compacto: reduce padding e icono
 }) {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -99,9 +100,15 @@ export default function DirectUpload({
       icon: 'FileText',
       label: 'documento PDF',
     },
-    'documents/publicaciones': {
+    'documents/audios': {
       accept: accept || 'application/pdf',
       maxSize: maxSize || 50 * 1024 * 1024, // 50MB
+      icon: 'FileText',
+      label: 'partitura PDF',
+    },
+    'documents/publicaciones': {
+      accept: accept || 'application/pdf',
+      maxSize: maxSize || 200 * 1024 * 1024, // 200MB
       icon: 'FileText',
       label: 'documento PDF',
     },
@@ -376,7 +383,7 @@ export default function DirectUpload({
           />
         )}
 
-        <div className="p-6 text-center">
+        <div className={cn(compact ? 'p-3' : 'p-6', 'text-center')}>
           {uploading ? (
             // Estado: Subiendo
             <div className="space-y-4">
@@ -509,7 +516,7 @@ export default function DirectUpload({
             <div className="space-y-2">
               <DynamicIcon
                 name={currentConfig.icon}
-                className="h-12 w-12 mx-auto text-gray-400"
+                className={cn(compact ? 'h-8 w-8' : 'h-12 w-12', 'mx-auto text-gray-400')}
               />
               <div>
                 <p className="font-medium text-gray-700 dark:text-gray-200">

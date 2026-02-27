@@ -277,6 +277,7 @@ return [
     'tipos_audio' => [
         'marinera' => 'Marinera',
         'huayno' => 'Huayño',
+        'huayno_pandillero' => 'Huayno Pandillero',
         'pandilla' => 'Pandilla',
         'sikuri' => 'Sikuri',
         'morenada' => 'Morenada',
@@ -407,7 +408,7 @@ return [
         ],
 
         'documents' => [
-            'max_size' => 50 * 1024 * 1024, // 50MB
+            'max_size' => 200 * 1024 * 1024, // 200MB
             'mime_types' => [
                 'application/pdf',
             ],
