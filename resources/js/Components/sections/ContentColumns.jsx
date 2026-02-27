@@ -9,7 +9,7 @@ import {
   Scale, FileText, Shield, Flag, Users,
   Video, Music, Award, Newspaper, Megaphone,
   Play, Pause, Download, Calendar, User, FileIcon, GripVertical,
-  ChevronLeft, ChevronRight, ExternalLink, Volume2, VolumeX, Loader2,
+  ChevronLeft, ChevronRight, ChevronDown, ExternalLink, Volume2, VolumeX, Loader2,
   MoreVertical, Maximize2
 } from 'lucide-react';
 import { useMediaContext, useVideoContext } from '@/contexts/MediaContext';
@@ -79,12 +79,14 @@ const STRINGS = {
   next: 'Siguiente',
   fullscreen: 'Pantalla completa',
   listen: 'Escuchar',
-  composer: 'Compositor:',
+  composer: 'Compositor',
   announcement: 'Comunicado',
   sectionTitle: '', // from config.columns.title
   sectionSubtitle: '', // from config.columns.subtitle
   docNavLabel: 'Navegación de documentos',
   viewLink: 'Ver enlace',
+  showDesc: 'Ver descripción',
+  hideDesc: 'Ocultar descripción',
 };
 
 // Utils
@@ -318,6 +320,7 @@ const VideoModalCarousel = React.memo(function VideoModalCarousel({
   const videoRef = React.useRef(null);
   const { setModalOpen } = useVideoContext();
   const [localIndex, setLocalIndex] = React.useState(currentIndex);
+  const [descExpanded, setDescExpanded] = React.useState(false);
 
   // Sync with external index when modal opens
   React.useEffect(() => {
@@ -341,6 +344,11 @@ const VideoModalCarousel = React.memo(function VideoModalCarousel({
   const currentVideo = videos?.[localIndex];
   const hasMultiple = videos?.length > 1;
   const total = videos?.length || 0;
+
+  // Collapse description when navigating to a different video
+  React.useEffect(() => {
+    setDescExpanded(false);
+  }, [localIndex]);
 
   // Navigation handlers
   const goToPrev = React.useCallback(() => {
@@ -443,10 +451,10 @@ const VideoModalCarousel = React.memo(function VideoModalCarousel({
           )}
         </div>
 
-        {/* Footer with info + unified navigation */}
-        <div className="p-4 border-t bg-muted/30">
-          {/* Video info */}
-          <div className="flex items-center gap-3 text-sm text-muted-foreground mb-3">
+        {/* Footer with info + description + navigation */}
+        <div className="border-t bg-muted/30">
+          {/* Video info row */}
+          <div className="flex items-center gap-3 text-sm text-muted-foreground px-4 pt-3 pb-2">
             {currentVideo.duracion && (
               <span className="flex items-center gap-1">
                 <Play className="h-3 w-3" /> {currentVideo.duracion}
@@ -458,9 +466,29 @@ const VideoModalCarousel = React.memo(function VideoModalCarousel({
             )}
           </div>
 
+          {/* Expandable description (only if exists) */}
+          {currentVideo.descripcion_larga && (
+            <div className="px-4 pb-2">
+              <button
+                onClick={() => setDescExpanded(prev => !prev)}
+                className="flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-primary transition-colors mb-2"
+              >
+                <ChevronDown className={cn("h-4 w-4 transition-transform duration-200", descExpanded && "rotate-180")} />
+                {descExpanded ? STRINGS.hideDesc : STRINGS.showDesc}
+              </button>
+              {descExpanded && (
+                <div
+                  className="prose prose-sm dark:prose-invert max-w-none max-h-40 overflow-y-auto pb-1
+                    prose-p:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0"
+                  dangerouslySetInnerHTML={{ __html: currentVideo.descripcion_larga }}
+                />
+              )}
+            </div>
+          )}
+
           {/* Unified navigation: Anterior | dots | Siguiente */}
           {hasMultiple && (
-            <div className="flex items-center justify-center gap-4">
+            <div className="flex items-center justify-center gap-4 px-4 pb-4">
               <Button variant="outline" size="sm" onClick={goToPrev} className="h-8">
                 <ChevronLeft className="h-4 w-4 mr-1" /> {STRINGS.previous}
               </Button>
@@ -486,6 +514,7 @@ const VideoModalCarousel = React.memo(function VideoModalCarousel({
               </Button>
             </div>
           )}
+          {!hasMultiple && <div className="pb-1" />}
         </div>
       </DialogContent>
     </Dialog>

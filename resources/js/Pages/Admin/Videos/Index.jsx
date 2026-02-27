@@ -56,7 +56,8 @@ export default function Index({ items, sectionVisible }) {
 
   const formFields = [
     { name: 'titulo', label: 'Título del video', required: true, fullWidth: true },
-    { name: 'descripcion', label: 'Descripción', type: 'textarea', rows: 2, fullWidth: true },
+    { name: 'descripcion', label: 'Descripción corta', type: 'textarea', rows: 2, fullWidth: true },
+    { name: 'descripcion_larga', label: 'Descripción detallada (opcional)', type: 'rich-text', fullWidth: true },
     {
       name: 'tipo_fuente',
       label: 'Fuente del video',
