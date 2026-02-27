@@ -2067,12 +2067,13 @@ const ComunicadoModal = React.memo(function ComunicadoModal({ item, isOpen, onCl
 
   const imageUrl = item.image_url || (item.imagen ? storageUrl(item.imagen) : null);
   const hasImage = !!imageUrl;
+  const hasContent = !!(item.contenido || item.extracto);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className={cn(
         "w-[95vw] max-h-[85vh] flex flex-col p-0 gap-0",
-        hasImage ? "max-w-4xl" : "max-w-2xl"
+        hasImage && hasContent ? "max-w-4xl" : hasImage ? "max-w-xl" : "max-w-2xl"
       )}>
         {/* Header */}
         <DialogHeader className="p-5 pb-4 border-b shrink-0">
@@ -2099,25 +2100,37 @@ const ComunicadoModal = React.memo(function ComunicadoModal({ item, isOpen, onCl
           </div>
         </DialogHeader>
 
-        {/* Body - responsive: imagen izq + contenido der en desktop, apilado en mobile */}
+        {/* Body dinámico: solo imagen centrada, o imagen+contenido en columnas */}
         <div className="flex-1 overflow-y-auto p-5">
-          <div className={cn(hasImage && "md:flex md:gap-6")}>
-            {hasImage && (
-              <div className="md:w-2/5 shrink-0 mb-4 md:mb-0">
-                <img
-                  src={imageUrl}
-                  alt={item.titulo}
-                  className="w-full rounded-lg object-contain"
-                />
-              </div>
-            )}
-            <div className="flex-1 min-w-0">
-              <div
-                className="prose prose-sm dark:prose-invert max-w-none break-words"
-                dangerouslySetInnerHTML={{ __html: item.contenido || item.extracto }}
+          {hasImage && !hasContent ? (
+            <div className="flex justify-center">
+              <img
+                src={imageUrl}
+                alt={item.titulo}
+                className="max-w-full rounded-lg object-contain"
               />
             </div>
-          </div>
+          ) : (
+            <div className={cn(hasImage && hasContent && "md:flex md:gap-6")}>
+              {hasImage && (
+                <div className="md:w-2/5 shrink-0 mb-4 md:mb-0">
+                  <img
+                    src={imageUrl}
+                    alt={item.titulo}
+                    className="w-full rounded-lg object-contain"
+                  />
+                </div>
+              )}
+              {hasContent && (
+                <div className="flex-1 min-w-0">
+                  <div
+                    className="prose prose-sm dark:prose-invert max-w-none break-words"
+                    dangerouslySetInnerHTML={{ __html: item.contenido || item.extracto }}
+                  />
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Footer con firmante */}
