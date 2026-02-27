@@ -385,7 +385,7 @@ const VideoModalCarousel = React.memo(function VideoModalCarousel({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl w-[95vw] p-0 gap-0 flex flex-col max-h-[90vh]">
+      <DialogContent className="max-w-5xl w-[95vw] p-0 gap-0 flex flex-col h-[90vh]">
         {/* Header — altura fija */}
         <DialogHeader className="shrink-0 p-4 pb-2 border-b">
           <div className="flex items-center justify-between pr-8">

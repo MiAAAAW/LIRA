@@ -112,6 +112,11 @@ class VideoController extends Controller
         // Remove temporary fields
         unset($validated['video_file'], $validated['r2_url']);
 
+        // Videos nuevos sin orden explícito van al frente (orden=0)
+        if (!isset($validated['orden']) || $validated['orden'] === null) {
+            $validated['orden'] = 0;
+        }
+
         Video::create($validated);
 
         return redirect()->route('admin.videos.index')

@@ -44,29 +44,29 @@ class LandingController extends Controller
             // ==========================================
             // MARCO LEGAL
             // ==========================================
-            'ley24325' => $vis['ley24325'] ? Ley24325::published()->orderBy('orden')->get() : [],
-            'baseLegal' => $vis['base_legal'] ? BaseLegal::published()->orderBy('orden')->get() : [],
-            'indecopi' => $vis['indecopi'] ? RegistroIndecopi::published()->orderBy('orden')->get() : [],
+            'ley24325' => $vis['ley24325'] ? Ley24325::published()->orderBy('orden')->orderByDesc('created_at')->get() : [],
+            'baseLegal' => $vis['base_legal'] ? BaseLegal::published()->orderBy('orden')->orderByDesc('created_at')->get() : [],
+            'indecopi' => $vis['indecopi'] ? RegistroIndecopi::published()->orderBy('orden')->orderByDesc('created_at')->get() : [],
 
             // ==========================================
             // HISTORIA
             // ==========================================
-            'estandartes' => $vis['estandartes'] ? Estandarte::published()->orderBy('orden')->get() : [],
+            'estandartes' => $vis['estandartes'] ? Estandarte::published()->orderBy('orden')->orderByDesc('created_at')->get() : [],
             'presidentes' => $vis['presidentes'] ? $this->getTeam() : [],
 
             // ==========================================
             // MULTIMEDIA
             // ==========================================
-            'videos' => $vis['videos'] ? Video::published()->orderBy('orden')->get() : [],
-            'audios' => $vis['audios'] ? Audio::published()->orderBy('orden')->get() : [],
+            'videos' => $vis['videos'] ? Video::published()->orderBy('orden')->orderByDesc('created_at')->get() : [],
+            'audios' => $vis['audios'] ? Audio::published()->orderBy('orden')->orderByDesc('created_at')->get() : [],
 
             // ==========================================
             // COMUNICACIONES
             // ==========================================
-            'publicaciones' => $vis['publicaciones'] ? Publicacion::published()->orderBy('orden')->get() : [],
+            'publicaciones' => $vis['publicaciones'] ? Publicacion::published()->orderBy('orden')->orderByDesc('created_at')->get() : [],
             'comunicados' => $vis['comunicados'] ? Comunicado::published()->latest('fecha')->get() : [],
             'comunicadoDestacado' => Comunicado::published()->featured()->vigentes()->latest('fecha')->first(),
-            'distinciones' => $vis['distinciones'] ? Distincion::published()->orderBy('orden')->get() : [],
+            'distinciones' => $vis['distinciones'] ? Distincion::published()->orderBy('orden')->orderByDesc('created_at')->get() : [],
         ]);
     }
 
