@@ -37,6 +37,7 @@ export const landingConfig = {
     logo: {
       text: "Lira Puno",
       href: "/",
+      image: "https://cdn.lirapuno.pe/gifs/fed7cc8a0d846ec01844df1d655b723e.gif",
     },
     items: [
       { label: "Inicio", href: "#hero" },
@@ -45,6 +46,9 @@ export const landingConfig = {
     cta: {
       text: "Admin",
       href: "/admin",
+      variant: "ghost",
+      size: "default",
+      className: "border-2 border-blue-500",
     },
   },
 

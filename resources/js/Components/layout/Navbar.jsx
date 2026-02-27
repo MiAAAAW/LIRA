@@ -81,7 +81,13 @@ export function Navbar({ config, className }) {
             href={config.logo.href}
             className="flex items-center gap-2 text-xl font-bold text-foreground hover:text-primary transition-colors"
           >
-            {config.logo.icon && (
+            {config.logo.image ? (
+              <img
+                src={config.logo.image}
+                alt={config.logo.text}
+                className="h-16 w-auto md:h-24 drop-shadow-[0_0_8px_rgba(255,255,255,0.9)]"
+              />
+            ) : config.logo.icon && (
               <DynamicIcon
                 name={config.logo.icon}
                 className="h-6 w-6 text-primary"
@@ -120,7 +126,9 @@ export function Navbar({ config, className }) {
             {config.cta && (
               <Button
                 asChild
-                className="gradient-pandilla text-white border-0 hover:opacity-90"
+                variant={config.cta.variant}
+                size={config.cta.size}
+                className={config.cta.className}
               >
                 <a
                   href={config.cta.href}
@@ -190,7 +198,9 @@ export function Navbar({ config, className }) {
                 >
                   <Button
                     asChild
-                    className="w-full gradient-pandilla text-white border-0"
+                    variant={config.cta.variant}
+                    size={config.cta.size}
+                    className={cn("w-full", config.cta.className)}
                   >
                     <a
                       href={config.cta.href}
