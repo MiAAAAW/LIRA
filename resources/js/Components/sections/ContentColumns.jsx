@@ -1134,7 +1134,7 @@ const AudioCard = React.memo(function AudioCard({ audio }) {
                 <h4 className="font-semibold text-sm line-clamp-1">{audio.titulo}</h4>
                 <div className="flex items-center gap-1 flex-shrink-0">
                   {hasPdf && (
-                    <FileText className="h-3 w-3 text-muted-foreground/50" title="Tiene partitura" />
+                    <FileText className="h-3 w-3 text-muted-foreground/50" />
                   )}
                   {audio.tipo && (
                     <Badge variant="secondary" className="capitalize text-[10px]">
@@ -1313,7 +1313,7 @@ const AudioCard = React.memo(function AudioCard({ audio }) {
                 <div className="h-[50vh]">
                   <PdfViewer
                     url={audio.partitura_pdf}
-                    title={`Partitura — ${audio.titulo}`}
+                    title={audio.titulo}
                     className="w-full h-full"
                     toolbar
                   />
@@ -1322,7 +1322,7 @@ const AudioCard = React.memo(function AudioCard({ audio }) {
                   <Button variant="outline" size="sm" asChild className="w-full">
                     <a href={audio.partitura_pdf} download>
                       <Download className="h-4 w-4 mr-2" />
-                      Descargar partitura
+                      Descargar
                     </a>
                   </Button>
                 </div>
